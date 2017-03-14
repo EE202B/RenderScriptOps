@@ -8,6 +8,8 @@
 #include "rsMatmul.h"
 #include "rsMatmul_test_data.h"
 
+#define ALLOWED_ERROR 0.000001f
+
 namespace matmultest {
 
 namespace sgemm {
@@ -210,14 +212,13 @@ void LargeTest(const char * path, bool isValid)
 #undef DATA_TYPE
 }
 
+namespace bnnm{
+#define DATA_TYPE uint8_t
 
+//TODO: bnnm test case
 
-
-
-
-
-
-
+#undef DATA_TYPE
+}
 
 }
 
