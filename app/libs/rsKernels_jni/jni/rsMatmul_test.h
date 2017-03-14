@@ -8,6 +8,28 @@
 #include "rsMatmul.h"
 #include "rsMatmul_test_data.h"
 
+namespace matmultest {
+
+namespace sgemm {
+
+#define DATA_TYPE float
+
+void getLargeData(DATA_TYPE*& a, DATA_TYPE*& b, int m, int n, int k)
+{
+    auto a_raw = getA();
+    auto b_raw = getB();
+
+    a = new DATA_TYPE[m*k];
+    b = new DATA_TYPE[n*k];
+
+    for(int i=0;i<m*k;++i){
+        a[i] = (DATA_TYPE)a_raw[i];
+    }
+    for(int i=0;i<n*k;++i){
+        b[i] = (DATA_TYPE)b_raw[i];
+    }
+}
+
 void getRefResult(DATA_TYPE* a, DATA_TYPE* b, void*& c, int m, int n, int k)
 {
     c = new DATA_TYPE[m*n];
@@ -58,7 +80,7 @@ bool testWithTolerance(void* out, void* ref, int m, int n)
     return true;
 }
 
-void sgemmSmallTest(const char * path, bool isValid)
+void SmallTest(const char * path, bool isValid)
 {
     int m=2, n=4, k=3;
     int a_sz = m*k, b_sz = n*k, c_sz = m*n;
@@ -103,7 +125,7 @@ void sgemmSmallTest(const char * path, bool isValid)
     delete[] static_cast<DATA_TYPE*>(c_out);
 }
 
-void sgemmMediumTest(const char * path, bool isValid)
+void MediumTest(const char * path, bool isValid)
 {
     int m=7, n=9, k=23;
     int a_sz = m*k, b_sz = n*k, c_sz = m*n;
@@ -158,26 +180,45 @@ void sgemmMediumTest(const char * path, bool isValid)
     delete[] static_cast<DATA_TYPE*>(c_out);
 }
 
-void sgemmLargeTest(const char * path, bool isValid)
+void LargeTest(const char * path, bool isValid)
 {
     int m=256, n=192, k=1152;
     int a_sz = m*k, b_sz = n*k, c_sz = m*n;
-    DATA_TYPE *a_ori, *b_ori, *c_ref;
-    getLargeData(a_ori, b_ori, c_ref);
+    DATA_TYPE *a_ori, *b_ori;
+    getLargeData(a_ori, b_ori, m, n, k);
 
     void *c_out;
     rsMatmul_sgemm(path, static_cast<void*>(a_ori), static_cast<void*>(b_ori), c_out, m, n, k);
 
     if(isValid){
+        void* c_ref;
+        getRefResult(a_ori, b_ori, c_ref, m, n, k);
+
         if(!testWithTolerance(c_out, c_ref, m, n)){
             LOGE("sgemm large test failed!");
         }else{
             LOGI("sgemm large test passed!");
         }
+        delete[] static_cast<DATA_TYPE*>(c_ref);
     }
 
+    delete[] a_ori;
+    delete[] b_ori;
     delete[] static_cast<DATA_TYPE*>(c_out);
 }
 
+#undef DATA_TYPE
+}
+
+
+
+
+
+
+
+
+
+
+}
 
 #endif //RSKERNELSTEST_RSMATMUL_TEST_H

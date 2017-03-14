@@ -31,13 +31,9 @@ Java_com_yingnanwang_rskernelstest_RSJniInterface_sgemmTest(JNIEnv * env,
     const char * path = env->GetStringUTFChars(pathObj, nullptr);
 
     Timer t;
-    sgemmSmallTest(path, true);
-    sgemmMediumTest(path, true);
-    sgemmLargeTest(path, true);
-    for(int i=0;i<5;++i){
-        sleep(1);
-        sgemmLargeTest(path, true);
-    }
+    matmultest::sgemm::SmallTest(path, true);
+    matmultest::sgemm::MediumTest(path, true);
+    matmultest::sgemm::LargeTest(path, true);
     t.print();
 
     //release the resource

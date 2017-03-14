@@ -11,6 +11,6 @@
 using namespace android::RSC;
 
 void rsMatmul_sgemm(const char * path, void* a_ptr, void* b_ptr, void*& c_ptr, int m, int n, int k);
-//void rsMatmul_bnnm(const char * path, void* a_ptr, void* b_ptr, void*& c_ptr, int m, int n, int k);
+void rsMatmul_bnnm(const char * path, void* a_ptr, void* b_ptr, void*& c_ptr, int m, int n, int k);
 
 #endif //RSKERNELSTEST_RSMATMUL_H

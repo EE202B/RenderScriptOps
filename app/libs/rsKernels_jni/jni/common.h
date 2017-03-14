@@ -10,7 +10,6 @@
 #include <android/log.h>
 
 
-#define DATA_TYPE float
 #define ALLOWED_ERROR 0.000001f
 
 #define LOG_TAG "NDK_LOG"
