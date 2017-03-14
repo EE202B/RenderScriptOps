@@ -108,7 +108,7 @@ void SmallTest(const char * path, bool isValid)
     }
 
     void *c_out;
-    rsMatmul_sgemm(path, static_cast<void*>(a_ori), static_cast<void*>(b_ori), c_out, m, n, k);
+    rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
 
     if(isValid){
         void* c_ref;
@@ -163,7 +163,7 @@ void MediumTest(const char * path, bool isValid)
     }
 
     void *c_out;
-    rsMatmul_sgemm(path, static_cast<void*>(a_ori), static_cast<void*>(b_ori), c_out, m, n, k);
+    rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
 
     if(isValid){
         void* c_ref;
@@ -190,7 +190,7 @@ void LargeTest(const char * path, bool isValid)
     getLargeData(a_ori, b_ori, m, n, k);
 
     void *c_out;
-    rsMatmul_sgemm(path, static_cast<void*>(a_ori), static_cast<void*>(b_ori), c_out, m, n, k);
+    rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
 
     if(isValid){
         void* c_ref;

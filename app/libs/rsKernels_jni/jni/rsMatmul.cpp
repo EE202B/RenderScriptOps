@@ -5,7 +5,8 @@
 #include "rsMatmul.h"
 
 // single float
-void rsMatmul_sgemm(const char * path, void* a_ptr, void* b_ptr, void*& c_ptr, int m, int n, int k)
+void rsMatmul_sgemm(const char * path, void* a_ptr, bool a_trans, void* b_ptr, bool b_trans, void*& c_ptr,
+                    int m, int n, int k, float alpha, float beta)
 {
     sp<RS> rs = new RS();
     rs->init(path);
@@ -25,14 +26,18 @@ void rsMatmul_sgemm(const char * path, void* a_ptr, void* b_ptr, void*& c_ptr, i
 
     sp<ScriptIntrinsicBLAS> sc = ScriptIntrinsicBLAS::create(rs);
 
-    sc->SGEMM(RsBlasTranspose::RsBlasNoTrans, RsBlasTranspose::RsBlasNoTrans, 1.0f, a_alloc, b_alloc, 0.0f, c_alloc);
+    RsBlasTranspose a_transpose = a_trans ? RsBlasTranspose::RsBlasTrans : RsBlasTranspose::RsBlasNoTrans;
+    RsBlasTranspose b_transpose = b_trans ? RsBlasTranspose::RsBlasTrans : RsBlasTranspose::RsBlasNoTrans;
+
+    sc->SGEMM(a_transpose, b_transpose, alpha, a_alloc, b_alloc, beta, c_alloc);
 
     c_ptr = new float[m*n];
     c_alloc->copy2DRangeTo(0, 0, n, m, c_ptr);
 }
 
 // single uint8_t
-void rsMatmul_bnnm(const char * path, void* a_ptr, void* b_ptr, void*& c_ptr, int m, int n, int k)
+void rsMatmul_bnnm(const char * path, void* a_ptr, int a_off, void* b_ptr, int b_off, void*& c_ptr, int c_off,
+                    int m, int n, int k, int c_mult)
 {
     sp<RS> rs = new RS();
     rs->init(path);
@@ -52,7 +57,7 @@ void rsMatmul_bnnm(const char * path, void* a_ptr, void* b_ptr, void*& c_ptr, in
 
     sp<ScriptIntrinsicBLAS> sc = ScriptIntrinsicBLAS::create(rs);
 
-    sc->BNNM(a_alloc, 0, b_alloc, 0, c_alloc, 0, 1);
+    sc->BNNM(a_alloc, a_off, b_alloc, b_off, c_alloc, c_off, c_mult);
 
     c_ptr = new uint8_t[m*n];
     c_alloc->copy2DRangeTo(0, 0, n, m, c_ptr);
