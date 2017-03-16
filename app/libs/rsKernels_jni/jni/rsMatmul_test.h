@@ -107,7 +107,7 @@ void SmallTest(const char * path, bool isValid)
         b_ori[i] = b_data[i];
     }
 
-    void *c_out;
+    void *c_out = new DATA_TYPE[m*n];
     rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
 
     if(isValid){
@@ -162,7 +162,7 @@ void MediumTest(const char * path, bool isValid)
         b_ori[i] = b_data[i];
     }
 
-    void *c_out;
+    void *c_out = new DATA_TYPE[m*n];
     rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
 
     if(isValid){
@@ -189,7 +189,7 @@ void LargeTest(const char * path, bool isValid)
     DATA_TYPE *a_ori, *b_ori;
     getLargeData(a_ori, b_ori, m, n, k);
 
-    void *c_out;
+    void *c_out = new DATA_TYPE[m*n];
     rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
 
     if(isValid){

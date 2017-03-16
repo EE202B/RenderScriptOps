@@ -31,7 +31,6 @@ void rsMatmul_sgemm(const char * path, void* a_ptr, bool a_trans, void* b_ptr, b
 
     sc->SGEMM(a_transpose, b_transpose, alpha, a_alloc, b_alloc, beta, c_alloc);
 
-    c_ptr = new float[m*n];
     c_alloc->copy2DRangeTo(0, 0, n, m, c_ptr);
 }
 
@@ -59,6 +58,5 @@ void rsMatmul_bnnm(const char * path, void* a_ptr, int a_off, void* b_ptr, int b
 
     sc->BNNM(a_alloc, a_off, b_alloc, b_off, c_alloc, c_off, c_mult);
 
-    c_ptr = new uint8_t[m*n];
     c_alloc->copy2DRangeTo(0, 0, n, m, c_ptr);
 }

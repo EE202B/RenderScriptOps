@@ -10,7 +10,7 @@
 
 using namespace android::RSC;
 
-struct rsTensorDim{
+struct rsConvInfo{
     int in_depth;
     int input_rows;
     int input_cols;
@@ -31,7 +31,7 @@ struct rsTensorDim{
     int batch;
     int data_format; // 0 F32, 1 U8
 
-    rsTensorDim(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int n9, int n10, int n11, int n12, int n13, int n14){
+    rsConvInfo(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int n9, int n10, int n11, int n12, int n13, int n14){
         in_depth=n1;input_rows=n2;input_cols=n3;
         filter_rows=n4;filter_cols=n5;
         stride_rows=n6;stride_cols=n7;
@@ -42,7 +42,7 @@ struct rsTensorDim{
 };
 
 // void rsConv1_1();
-void rsConv5_5(const char * path, void* filter, void* input, void*& output, rsTensorDim convInfo);
+void rsConv5_5(const char * path, void* filter, void* input, void*& output, rsConvInfo convInfo);
 // void rsConv3_3();
 // void rsConv7_7();
 
