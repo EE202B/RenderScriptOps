@@ -24,6 +24,24 @@ void rsMatmul_sgemm(const char * path, void* a_ptr, bool a_trans, void* b_ptr, b
     a_alloc->copy2DRangeFrom(0, 0, k, m, a_ptr);
     b_alloc->copy2DRangeFrom(0, 0, n, k, b_ptr);
 
+
+    /*a_alloc->syncAll(RS_ALLOCATION_USAGE_SHARED);
+    size_t a_alloc_stride;
+    auto a_alloc_ptr = static_cast<float*>(a_alloc->getPointer(&a_alloc_stride));
+    LOGE("stride: %d", a_alloc_stride);
+    a_alloc_stride /= 4;
+    auto a_alloc_type = a_alloc->getType();
+    auto a_alloc_count = a_alloc_type->getCount();
+    LOGE("Count: %d", a_alloc_count);
+
+    for (size_t i = 0; i < a_alloc_stride; i++) {
+        for (size_t j = 0; j < a_alloc_stride; j++) {
+            LOGI("%f", a_alloc_ptr[i * a_alloc_stride + j]);
+        }
+        LOGE("One row");
+    }*/
+
+
     sp<ScriptIntrinsicBLAS> sc = ScriptIntrinsicBLAS::create(rs);
 
     RsBlasTranspose a_transpose = a_trans ? RsBlasTranspose::RsBlasTrans : RsBlasTranspose::RsBlasNoTrans;

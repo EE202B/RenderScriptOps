@@ -20,6 +20,7 @@
 #include "common.h"
 #include "timer.h"
 #include "rsMatmul_test.h"
+#include "rsConv_test.h"
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_yingnanwang_rskernelstest_RSJniInterface_sgemmTest(JNIEnv * env,
@@ -34,6 +35,9 @@ Java_com_yingnanwang_rskernelstest_RSJniInterface_sgemmTest(JNIEnv * env,
     matmultest::sgemm::SmallTest(path, true);
     matmultest::sgemm::MediumTest(path, true);
     matmultest::sgemm::LargeTest(path, true);
+    
+    rsconvtest::conv3::SmallTest(path, true);
+
     t.print();
 
     //release the resource

@@ -20,12 +20,12 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := rsKernels_jni
 
-LOCAL_SRC_FILES := rsKernels_jni.cpp rsMatmul.cpp dummy.rs rsMatmul_test_data.cpp rsConv.cpp
-LOCAL_C_INCLUDES := common.h timer.h rsMatmul.h rsMatmul_test.h rsMatmul_test_data.h rsConv.h
+LOCAL_SRC_FILES := rsKernels_jni.cpp rsMatmul.cpp rsMatmul_test_data.cpp rsConv.cpp utils.rs
+LOCAL_C_INCLUDES := common.h timer.h rsMatmul.h rsMatmul_test.h rsMatmul_test_data.h rsConv.h rsConv_test.h 
 
 LOCAL_CLANG := true
 
-LOCAL_CFLAGS := -std=c++11
+LOCAL_CFLAGS := -std=c++11 
 LOCAL_LDFLAGS := -Wl,-Bsymbolic
 
 LOCAL_LDLIBS := \

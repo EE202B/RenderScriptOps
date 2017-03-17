@@ -4,8 +4,6 @@
 #include <time.h>
 #include "common.h"
 
-using namespace std;
-
 class Timer
 {
 public:

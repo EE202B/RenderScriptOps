@@ -14,4 +14,4 @@
 
 APP_ABI := armeabi-v7a x86
 APP_PLATFORM := android-24
-APP_STL := stlport_shared
+APP_STL := gnustl_shared
