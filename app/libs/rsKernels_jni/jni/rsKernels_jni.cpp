@@ -36,7 +36,11 @@ Java_com_yingnanwang_rskernelstest_RSJniInterface_sgemmTest(JNIEnv * env,
     matmultest::sgemm::MediumTest(path, true);
     matmultest::sgemm::LargeTest(path, true);
     
-    rsconvtest::conv3::SmallTest(path, true);
+    LOGD("Test of float:");
+    androidrs::conv::smallTest_rsConv3_3<float>(path, true);
+    LOGD("Test of uint8_t:");
+    // should be uint8_t but don't have the test data
+    androidrs::conv::smallTest_rsConv3_3<int8_t>(path, true);
 
     t.print();
 

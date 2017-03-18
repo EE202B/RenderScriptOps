@@ -22,10 +22,15 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    sourceSets {
-        main {
-            jni.srcDirs = []
-            jniLibs.srcDirs = ['./libs/rsKernels_jni/obj/local']
+//    sourceSets {
+//        main {
+//            jni.srcDirs = []
+//            jniLibs.srcDirs = ['./libs/rsKernels_jni/obj/local']
+//        }
+//    }
+    externalNativeBuild {
+        ndkBuild {
+            path 'libs/rsKernels_jni/jni/Android.mk'
         }
     }
 }
@@ -40,14 +45,14 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
-task buildNative(type:Exec, description: "Task to run ndk-build") {
-    workingDir './libs/rsKernels_jni'
-    commandLine ndk_build_root, '-B'
-}
-tasks.withType(JavaCompile) {
-    compileTask -> compileTask.dependsOn buildNative
-}
-clean {
-    delete './libs/rsKernels_jni/libs'
-    delete './libs/rsKernels_jni/obj'
-}
+//task buildNative(type:Exec, description: "Task to run ndk-build") {
+//    workingDir './libs/rsKernels_jni'
+//    commandLine ndk_build_root, '-B'
+//}
+//tasks.withType(JavaCompile) {
+//    compileTask -> compileTask.dependsOn buildNative
+//}
+//clean {
+//    delete './libs/rsKernels_jni/libs'
+//    delete './libs/rsKernels_jni/obj'
+//}
