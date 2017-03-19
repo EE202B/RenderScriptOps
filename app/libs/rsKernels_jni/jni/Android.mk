@@ -23,8 +23,14 @@ LOCAL_MODULE := rsKernels_jni
 RS_SRC_FILES := $(wildcard $(LOCAL_PATH)/*.rs)
 RS_SRC_FILES := $(RS_SRC_FILES:$(LOCAL_PATH)/%=%)
 
-LOCAL_SRC_FILES := rsKernels_jni.cpp rsMatmul.cpp rsMatmul_test_data.cpp $(RS_SRC_FILES)
-LOCAL_C_INCLUDES := common.h timer.h rsMatmul.h rsMatmul_test.h rsMatmul_test_data.h rsConv.h rsConv_test.h 
+CPP_SRC_FILES := $(wildcard $(LOCAL_PATH)/*.cpp)
+CPP_SRC_FILES := $(CPP_SRC_FILES:$(LOCAL_PATH)/%=%)
+
+CPP_HDR_FILES := $(wildcard $(LOCAL_PATH)/*.h)
+CPP_HDR_FILES := $(CPP_HDR_FILES:$(LOCAL_PATH)/%=%)
+
+LOCAL_SRC_FILES := $(CPP_SRC_FILES) $(RS_SRC_FILES)
+LOCAL_C_INCLUDES := $(CPP_HDR_FILES)
 
 LOCAL_CLANG := true
 
