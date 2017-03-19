@@ -26,9 +26,9 @@ bool testWithTolerance(void* out, void* ref, int sz)
     float l2NormRef = calcL2Norm(casted_ref, sz);
 
     float tolerance = ALLOWED_ERROR * (l2NormOut < l2NormRef ? l2NormOut : l2NormRef);
-    tolerance /= m * n;
+    tolerance /= sz;
 
-    for (int i = 0; i < m*n; ++i) {
+    for (int i = 0; i < sz; ++i) {
         float err = casted_out[i] - casted_ref[i];
         float absErr = err * err;
         if (absErr > tolerance) {
@@ -63,6 +63,28 @@ void smallTest_rsConv3_3(const char * path, bool isValid)
     T output_ref[] = {
         9, -1, 13, 5, 13, 7, 2, -8, 2, -13, 6, -3, 1, -5, 2, -4, 3, -4,
     };
+    // T filters[] = {
+    //     0, 0, 1, -1, -1, -1,
+    //     -1, 1, -1, 1, -1, -1,
+    //     -1, 1, -1, -1, 1, 1,
+    //     -1, 1, 0, 0, -1, -1,
+    //     1, 1, -1, 0, 0, 1,
+    //     -1, 1, 1, -1, 0, 0,
+    //     1, 0, 0, 1, 1, 1,
+    //     -1, -1, -1, 1, 1, 1,
+    //     1, 1, -1, 0, 1, -1,
+    // };
+    // T input[] = {
+    //     2, 2, 1, 1, 1, 1, 2, 0, 0, 0, 2, 2, 2, 1, 1,
+    //     1, 0, 2, 2, 0, 1, 2, 0, 1, 0, 0, 2, 1, 0, 0,
+    //     0, 0, 2, 2, 1, 0, 0, 1, 0, 1, 1, 2, 1, 0, 2,
+    //     2, 1, 2, 1, 2, 2, 1, 0, 0, 0, 0, 0, 1, 0, 1,
+    //     2, 2, 1, 1, 1, 0, 2, 0, 0, 1, 0, 2, 1, 2, 2,
+    // };
+    // T output_ref[] = {
+    //     4, 5, 6, -2, 0, 2, -5, 5, -3, 7, -5, 1, -6, 5, -1, 1, -6, 2,
+    // };
+
     rsConvInfo smallConvInfo(3, 5, 5, 3, 3, 2, 2, 1, 1, 2, 3, 3, 1, 0);
     if(sizeof(T)==1){
         smallConvInfo.data_format = 1;
@@ -71,7 +93,7 @@ void smallTest_rsConv3_3(const char * path, bool isValid)
     void* output = new T[18];
     rsConv_intrinsic<T>(path, static_cast<void*>(filters), static_cast<void*>(input), output, smallConvInfo);
 
-    if(testWithTolerance<T>(output, static_cast<void*>(output_ref), 18)){
+    if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), 18)){
         LOGE("rsConv3_intrinsic small test failed!");
     }else{
         LOGI("rsConv3_intrinsic small test passed!");
