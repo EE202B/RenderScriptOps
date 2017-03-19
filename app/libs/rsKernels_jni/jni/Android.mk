@@ -20,7 +20,10 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := rsKernels_jni
 
-LOCAL_SRC_FILES := rsKernels_jni.cpp rsMatmul.cpp rsMatmul_test_data.cpp utils.rs
+RS_SRC_FILES := $(wildcard $(LOCAL_PATH)/*.rs)
+RS_SRC_FILES := $(RS_SRC_FILES:$(LOCAL_PATH)/%=%)
+
+LOCAL_SRC_FILES := rsKernels_jni.cpp rsMatmul.cpp rsMatmul_test_data.cpp $(RS_SRC_FILES)
 LOCAL_C_INCLUDES := common.h timer.h rsMatmul.h rsMatmul_test.h rsMatmul_test_data.h rsConv.h rsConv_test.h 
 
 LOCAL_CLANG := true
