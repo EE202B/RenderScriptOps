@@ -7,11 +7,11 @@ namespace androidrs {
 namespace conv {
 
 template <typename T>
-T calcL2Norm(T* input, int sz)
+float calcL2Norm(T* input, int sz)
 {
-    T l2Norm = 0;
+    float l2Norm = 0;
     for (int i = 0; i < sz; ++i) {
-        l2Norm += input[i] * input[i];
+        l2Norm += (float)input[i] * input[i];
     }
     return l2Norm;
 }
@@ -22,15 +22,15 @@ bool testWithTolerance(void* out, void* ref, int sz)
     T* casted_out = static_cast<T*>(out);
     T* casted_ref = static_cast<T*>(ref);
 
-    T l2NormOut = calcL2Norm(casted_out, sz);
-    T l2NormRef = calcL2Norm(casted_ref, sz);
+    float l2NormOut = calcL2Norm(casted_out, sz);
+    float l2NormRef = calcL2Norm(casted_ref, sz);
 
-    T tolerance = ALLOWED_ERROR * (l2NormOut < l2NormRef ? l2NormOut : l2NormRef);
+    float tolerance = ALLOWED_ERROR * (l2NormOut < l2NormRef ? l2NormOut : l2NormRef);
     tolerance /= m * n;
 
     for (int i = 0; i < m*n; ++i) {
-        T err = casted_out[i] - casted_ref[i];
-        T absErr = err * err;
+        float err = casted_out[i] - casted_ref[i];
+        float absErr = err * err;
         if (absErr > tolerance) {
             return false;
         }
@@ -66,19 +66,23 @@ void smallTest_rsConv3_3(const char * path, bool isValid)
     T output_ref[] = {
         9, -1, 13, 5, 13, 7, 2, -8, 2, -13, 6, -3, 1, -5, 2, -4, 3, -4,
     };
-    rsConvInfo smallConvInfo(3, 5, 5, 3, 3, 1, 1, 1, 1, 2, 3, 3, 1, 0, 2);
+    rsConvInfo smallConvInfo(3, 5, 5, 3, 3, 2, 2, 1, 1, 2, 3, 3, 1, 0);
     if(sizeof(T)==1){
         smallConvInfo.data_format = 1;
     }
 
     void* output = new T[18];
-    rsConv3_intrinsic<T>(path, static_cast<void*>(filters), static_cast<void*>(input), output, smallConvInfo);
+    rsConv_intrinsic<T>(path, static_cast<void*>(filters), static_cast<void*>(input), output, smallConvInfo);
 
     if(testWithTolerance<T>(output, static_cast<void*>(output_ref), 18)){
         LOGE("rsConv3_intrinsic small test failed!");
     }else{
         LOGI("rsConv3_intrinsic small test passed!");
     }
+
+    // for(int i=0;i<18;++i){
+    //     LOGI("%f", static_cast<T*>(output)[i]);
+    // }
 
     delete[] static_cast<T*>(output);
 }

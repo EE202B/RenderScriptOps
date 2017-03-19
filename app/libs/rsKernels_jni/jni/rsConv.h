@@ -40,9 +40,8 @@ struct rsConvInfo{
 
     int batch;
     int data_format; // 0 F32, 1 U8
-    int conv_stride;
 
-    rsConvInfo(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int n9, int n10, int n11, int n12, int n13, int n14, int n15){
+    rsConvInfo(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int n9, int n10, int n11, int n12, int n13, int n14){
         in_depth=n1;
         input_rows=n2+n8*2;
         input_cols=n3+n9*2;
@@ -50,16 +49,16 @@ struct rsConvInfo{
         stride_rows=n6;stride_cols=n7;
         pad_rows=n8;pad_cols=n9;
         out_depth=n10;out_rows=n11;out_cols=n12;
-        batch=n13;data_format=n14;conv_stride=n15;
+        batch=n13;data_format=n14;
     };
 };
 
 // use Intrinsic, memcpy, input must be padded, conv kernel stride is fixed at 1, the output padded area are garbage
-// TODO: add ScriptGroup
 template <typename T>
-void rsConv3_intrinsic(const char * path, void* filter, void* input, void*& output, rsConvInfo convInfo)
+void rsConv_intrinsic(const char * path, void* filter, void* input, void*& output, rsConvInfo convInfo)
 {
-    const size_t filter_w = 3;
+    // assume square filter
+    const size_t filter_w = convInfo.filter_rows;
     const size_t filter_sz = filter_w * filter_w;
 
     sp<RS> rs = new RS();
@@ -195,17 +194,18 @@ void rsConv3_intrinsic(const char * path, void* filter, void* input, void*& outp
         }
     }
 
-    size_t output_row_sz = (convInfo.input_rows - 2*convInfo.pad_rows - 1) / convInfo.conv_stride + 1;
+    // size_t output_row_sz = (convInfo.input_rows - 2*convInfo.pad_rows - 1) / convInfo.stride_rows + 1;
+    // size_t output_col_sz = (convInfo.input_cols - 2*convInfo.pad_cols - 1) / convInfo.stride_cols + 1;
 
     for(int k=0;k<output_alloc_final.size();++k){
         size_t stride;
         auto tmp = static_cast<T*>(output_alloc_final[k]->getPointer(&stride));
         stride /= e_bytes;
 
-        for(int i=convInfo.pad_rows;i<convInfo.input_rows-convInfo.pad_cols;i+=convInfo.conv_stride){
-            for(int j=convInfo.pad_cols;j<convInfo.input_cols-convInfo.pad_cols;j+=convInfo.conv_stride){
-                size_t out_idx = (i-convInfo.pad_rows)*output_row_sz/convInfo.conv_stride + (j-convInfo.pad_cols)/convInfo.conv_stride;
-                static_cast<T*>(output)[out_idx*output_alloc_final.size() + k] = tmp[j * stride + i];
+        for(int i=convInfo.pad_rows;i<convInfo.input_rows-convInfo.pad_cols;i+=convInfo.stride_rows){
+            for(int j=convInfo.pad_cols;j<convInfo.input_cols-convInfo.pad_cols;j+=convInfo.stride_cols){
+                size_t out_idx = ((j-convInfo.pad_cols)/convInfo.stride_cols)*convInfo.out_cols + ((i-convInfo.pad_rows)/convInfo.stride_rows);
+                static_cast<T*>(output)[out_idx * output_alloc_final.size() + k] = tmp[i * stride + j];
             }
         }
     }
