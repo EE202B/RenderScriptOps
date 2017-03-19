@@ -43,8 +43,8 @@ struct rsConvInfo{
 
     rsConvInfo(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int n9, int n10, int n11, int n12, int n13, int n14){
         in_depth=n1;
-        input_rows=n2+n8*2;
-        input_cols=n3+n9*2;
+        input_rows=n2;
+        input_cols=n3;
         filter_rows=n4;filter_cols=n5;
         stride_rows=n6;stride_cols=n7;
         pad_rows=n8;pad_cols=n9;
@@ -60,12 +60,14 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     // assume square filter
     const size_t filter_w = convInfo.filter_rows;
     const size_t filter_sz = filter_w * filter_w;
+    const size_t filter_stride_e = convInfo.out_depth * convInfo.in_depth;
+    const size_t input_stride_e = convInfo.in_depth;
+    const size_t padded_rows = convInfo.input_rows + 2*convInfo.pad_rows;
+    const size_t padded_cols = convInfo.input_cols + 2*convInfo.pad_cols;
 
     sp<RS> rs = new RS();
     rs->init(path);
     sp<const Element> e;
-    size_t filter_stride_e = convInfo.out_depth * convInfo.in_depth;
-    size_t input_stride_e = convInfo.in_depth;
 
     if(convInfo.data_format==0){
         e = Element::F32(rs);
@@ -104,8 +106,8 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
 
     // decode input
     auto input_cast = static_cast<T*>(input);
-    sp<const Type> input_layer_t = Type::create(rs, e, convInfo.input_cols,
-                                                       convInfo.input_rows,
+    sp<const Type> input_layer_t = Type::create(rs, e, padded_cols,
+                                                       padded_rows,
                                                        0);
     std::vector<sp<Allocation > > intput_layers;
     //TODO: use rs
@@ -117,7 +119,8 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
 
         for (size_t i = 0; i < convInfo.input_rows; i++) {
             for (size_t j = 0; j < convInfo.input_cols; j++) {
-                input_alloc_ptr[i * input_alloc_stride + j] = (input_cast + k)[(j * convInfo.input_cols + i) * input_stride_e];
+                input_alloc_ptr[(i + convInfo.pad_rows) * input_alloc_stride + j + convInfo.pad_cols] 
+                        = (input_cast + k)[(j * convInfo.input_cols + i) * input_stride_e];
             }
         }
         intput_layers.push_back(input_alloc);
@@ -127,8 +130,8 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     //     size_t input_alloc_stride;
     //     auto tmp = static_cast<T*>(intput_layers[k]->getPointer(&input_alloc_stride));
     //     input_alloc_stride /= e_bytes;
-    //     for (size_t i = 0; i < convInfo.input_rows; i++) {
-    //         for (size_t j = 0; j < convInfo.input_cols; j++) {
+    //     for (size_t i = 0; i < padded_rows; i++) {
+    //         for (size_t j = 0; j < padded_cols; j++) {
     //             LOGI("%f", tmp[i * input_alloc_stride + j]);
     //         }
     //         LOGE("One row");
@@ -137,8 +140,8 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     // }
 
     // Conv
-    sp<const Type> output_layer_t = Type::create(rs, e, convInfo.input_cols,
-                                                        convInfo.input_rows,
+    sp<const Type> output_layer_t = Type::create(rs, e, padded_cols,
+                                                        padded_rows,
                                                         0);
     std::vector<std::vector<sp<Allocation> > > output_filters_reponse(
         convInfo.out_depth, std::vector<sp<Allocation> >(convInfo.in_depth, NULL)
@@ -161,8 +164,8 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     //         size_t stride;
     //         auto tmp = static_cast<T*>(output_filters_reponse[i][j]->getPointer(&stride));
     //         stride /= e_bytes;
-    //         for(int p=0;p<convInfo.input_rows;++p){
-    //             for(int q = 0;q<convInfo.input_cols;++q){
+    //         for(int p=0;p<convInfo.padded_rows;++p){
+    //             for(int q = 0;q<padded_cols;++q){
     //                 LOGI("%f", tmp[p * stride + q]);
     //             }
     //             LOGE("One row");
@@ -194,16 +197,14 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
         }
     }
 
-    // size_t output_row_sz = (convInfo.input_rows - 2*convInfo.pad_rows - 1) / convInfo.stride_rows + 1;
-    // size_t output_col_sz = (convInfo.input_cols - 2*convInfo.pad_cols - 1) / convInfo.stride_cols + 1;
-
+    //TODO: use rs
     for(int k=0;k<output_alloc_final.size();++k){
         size_t stride;
         auto tmp = static_cast<T*>(output_alloc_final[k]->getPointer(&stride));
         stride /= e_bytes;
 
-        for(int i=convInfo.pad_rows;i<convInfo.input_rows-convInfo.pad_cols;i+=convInfo.stride_rows){
-            for(int j=convInfo.pad_cols;j<convInfo.input_cols-convInfo.pad_cols;j+=convInfo.stride_cols){
+        for(int i=convInfo.pad_rows;i<padded_rows-convInfo.pad_cols;i+=convInfo.stride_rows){
+            for(int j=convInfo.pad_cols;j<padded_cols-convInfo.pad_cols;j+=convInfo.stride_cols){
                 size_t out_idx = ((j-convInfo.pad_cols)/convInfo.stride_cols)*convInfo.out_cols + ((i-convInfo.pad_rows)/convInfo.stride_rows);
                 static_cast<T*>(output)[out_idx * output_alloc_final.size() + k] = tmp[i * stride + j];
             }
@@ -215,11 +216,6 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
             delete[] mFilters2D[i][j];
         }
     }
-};
-
-template <typename T>
-void rsConv5_intrinsic(const char * path, void* filter, void* input, void*& output, rsConvInfo convInfo){
-
 };
 
 // Use custom script, no memcpy, input don't need padding, conv kernel stride is user defined, the output size smaller than input
