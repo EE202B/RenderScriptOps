@@ -11,6 +11,8 @@
 #include "RenderScript.h"
 #include "ScriptC_utils.h"
 #include "ScriptC_decodeFilter.h"
+#include "ScriptC_decodeInput.h"
+#include "ScriptC_decodeOutput.h"
 
 using namespace android::RSC;
 
@@ -89,18 +91,32 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     sp<const Type> one_filter_t = Type::create(rs, ef, filter_sz,
                                                       0,
                                                       0);
+    // std::vector<std::vector<float* > > mFilters2D(
+    //     convInfo.out_depth, std::vector<float* >(convInfo.in_depth, nullptr)
+    // );
     // TODO: U8 mode 
     std::vector<sp<Allocation>> mFilters2D;
     for(size_t i=0;i<convInfo.in_depth;++i){
         for(size_t j=0;j<convInfo.out_depth;++j){
             sp<Allocation> one_filter = Allocation::createTyped(rs, one_filter_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
             mFilters2D.push_back(one_filter);
+
             sp<ScriptC_decodeFilter> sc = new ScriptC_decodeFilter(rs);
             sc->set_filterW(filter_w);
             sc->set_decodeStride(filter_stride_e);
             sc->set_startIdx(i * convInfo.out_depth + j);
             sc->bind_allPtrF32(allFilters_alloc);
             sc->forEach_decode_F32(one_filter);
+
+            // auto filter_transposed = static_cast<T*>(filter) + (i * convInfo.out_depth + j);
+            // mFilters2D[j][i] = new float[filter_sz];
+            // auto filter_transposed = static_cast<T*>(filter) + (i * convInfo.out_depth + j);
+            // mFilters2D[j][i] = new float[filter_sz];
+            // for(size_t p=0;p<filter_w;++p){
+            //     for(size_t q=0;q<filter_w;++q){
+            //         mFilters2D[j][i][p * filter_w + q] = (float)filter_transposed[(q * filter_w + p) * filter_stride_e];
+            //     }
+            // }
         }
     }
     rs->finish();
@@ -117,7 +133,13 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     // return;
 
     // decode input
-    auto input_cast = static_cast<T*>(input);
+    // auto input_cast = static_cast<T*>(input);
+    sp<const Type> all_inputs_t = Type::create(rs, e, convInfo.in_depth*convInfo.input_rows*convInfo.input_cols,
+                                                       0,
+                                                       0);
+    sp<Allocation > allInputs_alloc = Allocation::createTyped(rs, all_inputs_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+    allInputs_alloc->copy1DFrom(input);
+
     sp<const Type> input_layer_t = Type::create(rs, e, padded_cols,
                                                        padded_rows,
                                                        0);
@@ -125,18 +147,30 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     //TODO: use rs
     for(size_t k=0;k<convInfo.in_depth;++k){
         sp<Allocation > input_alloc = Allocation::createTyped(rs, input_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
-        size_t input_alloc_stride;
-        auto input_alloc_ptr = static_cast<T*>(input_alloc->getPointer(&input_alloc_stride));
-        input_alloc_stride /= e_bytes;
-
-        for (size_t i = 0; i < convInfo.input_rows; i++) {
-            for (size_t j = 0; j < convInfo.input_cols; j++) {
-                input_alloc_ptr[(i + convInfo.pad_rows) * input_alloc_stride + j + convInfo.pad_cols]  
-                        = (input_cast + k)[(j * convInfo.input_cols + i) * input_stride_e];      
-            }
-        }
         intput_layers.push_back(input_alloc);
+
+        sp<ScriptC_decodeInput> sc = new ScriptC_decodeInput(rs);
+        sc->set_inputRows(convInfo.input_rows);
+        sc->set_inputCols(convInfo.input_cols);
+        sc->set_padRows(convInfo.pad_rows);
+        sc->set_padCols(convInfo.pad_cols);
+        sc->set_decodeStride(input_stride_e);
+        sc->set_startIdx(k);
+        sc->bind_allPtrF32(allInputs_alloc);
+        sc->forEach_decode_F32(input_alloc);
+
+        // size_t input_alloc_stride;
+        // auto input_alloc_ptr = static_cast<T*>(input_alloc->getPointer(&input_alloc_stride));
+        // input_alloc_stride /= e_bytes;
+
+        // for (size_t i = 0; i < convInfo.input_rows; i++) {
+        //     for (size_t j = 0; j < convInfo.input_cols; j++) {
+        //         input_alloc_ptr[(i + convInfo.pad_rows) * input_alloc_stride + j + convInfo.pad_cols]  
+        //                 = (input_cast + k)[(j * convInfo.input_cols + i) * input_stride_e];      
+        //     }
+        // }
     }
+    rs->finish();
 
     // for(size_t k=0;k<intput_layers.size();++k){
     //     size_t input_alloc_stride;
@@ -228,19 +262,40 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
         }
     }
 
-    //TODO: use rs
-    for(int k=0;k<output_alloc_final.size();++k){
-        size_t stride;
-        auto tmp = static_cast<T*>(output_alloc_final[k]->getPointer(&stride));
-        stride /= e_bytes;
+    //output
+    sp<const Type> all_outputs_t = Type::create(rs, e, convInfo.out_depth*convInfo.out_rows*convInfo.out_cols,
+                                                       0,
+                                                       0);
+    sp<Allocation > allOutputs_alloc = Allocation::createTyped(rs, all_outputs_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
 
-        for(int i=convInfo.pad_rows;i<padded_rows-convInfo.pad_cols;i+=convInfo.stride_rows){
-            for(int j=convInfo.pad_cols;j<padded_cols-convInfo.pad_cols;j+=convInfo.stride_cols){
-                size_t out_idx = ((j-convInfo.pad_cols)/convInfo.stride_cols)*convInfo.out_cols + ((i-convInfo.pad_rows)/convInfo.stride_rows);
-                static_cast<T*>(output)[out_idx * output_alloc_final.size() + k] = tmp[i * stride + j];
-            }
-        }
+    for(int k=0;k<output_alloc_final.size();++k){
+
+        sp<ScriptC_decodeOutput> sc = new ScriptC_decodeOutput(rs);
+        sc->set_inputRows(convInfo.input_rows);
+        sc->set_inputCols(convInfo.input_cols);
+        sc->set_padRows(convInfo.pad_rows);
+        sc->set_padCols(convInfo.pad_cols);
+        sc->set_outDepth(convInfo.out_depth);
+        sc->set_strideRows(convInfo.stride_rows);
+        sc->set_strideCols(convInfo.stride_cols);
+        sc->set_outCols(convInfo.out_cols);
+        sc->set_startIdx(k);
+
+        sc->set_layerInPtrF32(output_alloc_final[k]);
+        sc->bind_allOutPtrF32(allOutputs_alloc);
+        sc->forEach_decode_F32(output_alloc_final[k]);
+
+        // size_t stride;
+        // auto tmp = static_cast<T*>(output_alloc_final[k]->getPointer(&stride));
+        // stride /= e_bytes;
+        // for(int i=convInfo.pad_rows;i<padded_rows-convInfo.pad_rows;i+=convInfo.stride_rows){
+        //     for(int j=convInfo.pad_cols;j<padded_cols-convInfo.pad_cols;j+=convInfo.stride_cols){
+        //         size_t out_idx = ((j-convInfo.pad_cols)/convInfo.stride_cols)*convInfo.out_cols + ((i-convInfo.pad_rows)/convInfo.stride_rows);
+        //         static_cast<T*>(output)[out_idx * output_alloc_final.size() + k] = tmp[i * stride + j];
+        //     }
+        // }
     }
+    allOutputs_alloc->copy1DTo(output);
 
     // for(int i=0;i<mFilters2D.size();++i){
     //     for(int j = 0;j<mFilters2D[i].size();++j){
