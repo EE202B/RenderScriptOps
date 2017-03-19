@@ -41,7 +41,6 @@ bool testWithTolerance(void* out, void* ref, int sz)
 template <typename T>
 void smallTest_rsConv3_3(const char * path, bool isValid)
 {
-    LOGD("smallTest_rsConv3_3: ");
     //intrinsic & myScript
     T filters[] = {
         0, -1, 0, 0, -1, 0, 

@@ -146,15 +146,29 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     std::vector<std::vector<sp<Allocation> > > output_filters_reponse(
         convInfo.out_depth, std::vector<sp<Allocation> >(convInfo.in_depth, NULL)
     );   
-    for(size_t i=0;i<mFilters2D.size();++i){       
-        for(size_t j=0;j<mFilters2D[i].size();++j){
-            sp<Allocation > output_alloc_filter = Allocation::createTyped(rs, output_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
-            output_filters_reponse[i][j] = output_alloc_filter;
+    if(filter_w==3){
+        for(size_t i=0;i<mFilters2D.size();++i){       
+            for(size_t j=0;j<mFilters2D[i].size();++j){
+                sp<Allocation > output_alloc_filter = Allocation::createTyped(rs, output_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+                output_filters_reponse[i][j] = output_alloc_filter;
 
-            sp<ScriptIntrinsicConvolve3x3> sc = ScriptIntrinsicConvolve3x3::create(rs, e);
-            sc->setCoefficients(mFilters2D[i][j]);
-            sc->setInput(intput_layers[j]);
-            sc->forEach(output_alloc_filter);
+                sp<ScriptIntrinsicConvolve3x3> sc = ScriptIntrinsicConvolve3x3::create(rs, e);
+                sc->setCoefficients(mFilters2D[i][j]);
+                sc->setInput(intput_layers[j]);
+                sc->forEach(output_alloc_filter);
+            }
+        }
+    }else if(filter_w==5){
+        for(size_t i=0;i<mFilters2D.size();++i){       
+            for(size_t j=0;j<mFilters2D[i].size();++j){
+                sp<Allocation > output_alloc_filter = Allocation::createTyped(rs, output_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+                output_filters_reponse[i][j] = output_alloc_filter;
+
+                sp<ScriptIntrinsicConvolve5x5> sc = ScriptIntrinsicConvolve5x5::create(rs, e);
+                sc->setCoefficients(mFilters2D[i][j]);
+                sc->setInput(intput_layers[j]);
+                sc->forEach(output_alloc_filter);
+            }
         }
     }
     rs->finish();
