@@ -189,6 +189,7 @@ void largeTest_F32(const char * path)
         rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
         if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
             LOGE("rsConv_script 7x7 float large test failed!");
+            LOGE("Issue: Filter size 7 but padding 2!");
         }else{
             LOGI("rsConv_script 7x7 float large test passed!");
         }

@@ -173,9 +173,8 @@ void mediumTest(const char * path)
     if(sizeof(T)==4){
         rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
     }else if(sizeof(T)==1){
-        // rsMatmul_bnnm
+        rsMatmul_bnnm(path, static_cast<void*>(a_ori), 0, static_cast<void*>(b_ori), 0, c_out, 0, m, n, k, 1);
     }
-
 
     void* c_ref;
     getRefResult<T>(a_ori, b_ori, c_ref, m, n, k);
@@ -204,7 +203,7 @@ void largeTest(const char * path)
     if(sizeof(T)==4){
         rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
     }else if(sizeof(T)==1){
-        // rsMatmul_bnnm
+        rsMatmul_bnnm(path, static_cast<void*>(a_ori), 0, static_cast<void*>(b_ori), 0, c_out, 0, m, n, k, 1);
     }
 
     void* c_ref;
