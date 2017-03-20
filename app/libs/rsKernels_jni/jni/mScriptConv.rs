@@ -55,7 +55,6 @@ float RS_KERNEL launchConvF32(uint32_t x)
     uint32_t y_lo = max((int32_t)in_centerY-filter_hf, 0);
     uint32_t y_hi = min((int32_t)in_centerY+filter_hf, input_rows-1);
 
-
     if((int32_t)in_centerX - filter_hf < 0){
         x_filter_off = filter_hf - (int32_t)in_centerX;
     }
@@ -80,5 +79,39 @@ float RS_KERNEL launchConvF32(uint32_t x)
 
 uint8_t RS_KERNEL launchConvU8(uint32_t x, uint32_t y)
 {
-    return 0;
+    uint32_t row, col, lay;
+    uint8_t sum = 0;
+    uint32_t x_filter_off = 0, y_filter_off = 0;
+
+    uint32_t out_z = x % out_depth;
+    uint32_t out_y = (x / out_depth) % out_rows;
+    uint32_t out_x = (x / out_depth) / out_rows;
+    uint32_t in_centerX = out_x * stride_cols;
+    uint32_t in_centerY = out_y * stride_rows;
+
+    uint32_t x_lo = max((int32_t)in_centerX-filter_hf, 0);
+    uint32_t x_hi = min((int32_t)in_centerX+filter_hf, input_cols-1);
+    uint32_t y_lo = max((int32_t)in_centerY-filter_hf, 0);
+    uint32_t y_hi = min((int32_t)in_centerY+filter_hf, input_rows-1);
+
+    if((int32_t)in_centerX - filter_hf < 0){
+        x_filter_off = filter_hf - (int32_t)in_centerX;
+    }
+    if((int32_t)in_centerY - filter_hf < 0){
+        y_filter_off = filter_hf - (int32_t)in_centerY;
+    }
+
+    uint8_t input_ele, filter_ele;
+    for(row=x_lo;row<=x_hi;++row){
+        for(col=y_lo;col<=y_hi;++col){
+            for(lay=0;lay<in_depth;++lay){
+                input_ele = rsGetElementAt_uchar(inputs, lay + (row * input_rows + col) * in_depth);
+                filter_ele = rsGetElementAt_uchar(filters, 
+                                out_z + lay * out_depth + ((row - x_lo + x_filter_off) * filter_w + col - y_lo + y_filter_off) * filter_stride_e);
+                sum += input_ele * filter_ele;
+            }
+        }
+    }
+
+    return sum;
 }

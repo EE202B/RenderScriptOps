@@ -32,13 +32,15 @@ Java_com_yingnanwang_rskernelstest_RSJniInterface_sgemmTest(JNIEnv * env,
     const char * path = env->GetStringUTFChars(pathObj, nullptr);
 
     Timer t;
-    matmultest::sgemm::SmallTest(path, true);
-    matmultest::sgemm::MediumTest(path, true);
+    // matmultest::sgemm::SmallTest(path, true);
+    // matmultest::sgemm::MediumTest(path, true);
     // matmultest::sgemm::LargeTest(path, true);
     
-    LOGD("Test of float:");
-    androidrs::conv::smallTest_rsConv3_3<float>(path, true);
-    LOGD("Test of uint8_t:");
+    androidrs::conv::smallTest<float>(path);
+    androidrs::conv::largeTest_F32<float>(path);
+
+
+    // LOGD("Test of uint8_t:");
     // should be uint8_t but don't have the test data
     // androidrs::conv::smallTest_rsConv3_3<int8_t>(path, true);
 

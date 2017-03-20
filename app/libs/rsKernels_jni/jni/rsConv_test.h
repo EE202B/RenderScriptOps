@@ -2,6 +2,7 @@
 #define RSKERNELSTEST_RSCONV_TEST_H
 
 #include "rsConv.h"
+#include "rsConv_test_data.h"
 
 namespace androidrs {
 namespace conv {
@@ -39,9 +40,8 @@ bool testWithTolerance(void* out, void* ref, int sz)
 }
 
 template <typename T>
-void smallTest_rsConv3_3(const char * path, bool isValid)
+void smallTest(const char * path)
 {
-    //intrinsic & myScript
     T filters[] = {
         0, -1, 0, 0, -1, 0, 
         -1, -1, 0, -1, 0, -1,
@@ -88,18 +88,18 @@ void smallTest_rsConv3_3(const char * path, bool isValid)
     void* output = new T[18];
     rsConvInfo smallConvInfo(3, 5, 5, 3, 3, 2, 2, 1, 1, 2, 3, 3, 1, sizeof(T));
 
-    rsConv_intrinsic<T>(path, static_cast<void*>(filters), static_cast<void*>(input), output, smallConvInfo);
-    if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), 18)){
-        LOGE("rsConv_intrinsic 3x3 small test failed!");
-    }else{
-        LOGI("rsConv_intrinsic 3x3 small test passed!");
-    }
+    // rsConv_intrinsic<T>(path, static_cast<void*>(filters), static_cast<void*>(input), output, smallConvInfo);
+    // if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), 18)){
+    //     LOGE("rsConv_intrinsic 3x3 small test failed!");
+    // }else{
+    //     LOGI("rsConv_intrinsic 3x3 small test passed!");
+    // }
 
     rsConv_script<T>(path, static_cast<void*>(filters), static_cast<void*>(input), output, smallConvInfo);
     if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), 18)){
-        LOGE("rsConv_script 3x3 small test failed!");
+        LOGE("rsConv_script small test failed!");
     }else{
-        LOGI("rsConv_script 3x3 small test passed!");
+        LOGI("rsConv_script small test passed!");
     }
 
     // for(int i=0;i<18;++i){
@@ -109,14 +109,95 @@ void smallTest_rsConv3_3(const char * path, bool isValid)
     delete[] static_cast<T*>(output);
 }
 
-void largeTest_rsConv3_3(const char * path, bool isValid)
+template <typename T>
+void largeTest_F32(const char * path)
 {
-    //intrinsic & myScript
+
+    ///////////////////////////////////////////////
+    // conv 1 test
+    {
+        auto input = getConv1_input_F32();
+        auto filter = getConv1_filter_F32();
+        auto output_ref = getConv1_output_F32();
+        const int outputSz = 2048;
+        rsConvInfo convInfo(508, 4, 4, 1, 1, 1, 1, 0, 0, 128, 4, 4, 1, sizeof(T));
+
+        void* output = new T[outputSz];
+        rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
+        if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
+            LOGE("rsConv_script 1x1 float large test failed!");
+        }else{
+            LOGI("rsConv_script 1x1 float large test passed!");
+        }
+        delete[] static_cast<T*>(output);
+    }
+    ///////////////////////////////////////////////
+
+    ///////////////////////////////////////////////
+    // conv 3 test
+    {
+        auto input = getConv3_input_F32();
+        auto filter = getConv3_filter_F32();
+        auto output_ref = getConv3_output_F32();
+        const int outputSz = 602112;
+        rsConvInfo convInfo(64, 56, 56, 3, 3, 1, 1, 1, 1, 192, 56, 56, 1, sizeof(T));
+
+        void* output = new T[outputSz];
+        rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
+        if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
+            LOGE("rsConv_script 3x3 float large test failed!");
+        }else{
+            LOGI("rsConv_script 3x3 float large test passed!");
+        }
+        delete[] static_cast<T*>(output);
+    }
+    ///////////////////////////////////////////////
+
+    ///////////////////////////////////////////////
+    // conv 5 test
+    {
+        auto input = getConv5_input_F32();
+        auto filter = getConv5_filter_F32();
+        auto output_ref = getConv5_output_F32();
+        const int outputSz = 25088;
+        rsConvInfo convInfo(16, 28, 28, 5, 5, 1, 1, 2, 2, 32, 28, 28, 1, sizeof(T));
+
+        void* output = new T[outputSz];
+        rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
+        if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
+            LOGE("rsConv_script 5x5 float large test failed!");
+        }else{
+            LOGI("rsConv_script 5x5 float large test passed!");
+        }
+        delete[] static_cast<T*>(output);
+    }
+    ///////////////////////////////////////////////
+
+    ///////////////////////////////////////////////
+    // conv 7 test
+    // failed because padding is 2 WTF???
+    {
+        auto input = getConv7_input_F32();
+        auto filter = getConv7_filter_F32();
+        auto output_ref = getConv7_output_F32();
+        const int outputSz = 802816;
+        rsConvInfo convInfo(3, 224, 224, 7, 7, 2, 2, 2, 2, 64, 112, 112, 1, sizeof(T));
+
+        void* output = new T[outputSz];
+        rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
+        if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
+            LOGE("rsConv_script 7x7 float large test failed!");
+        }else{
+            LOGI("rsConv_script 7x7 float large test passed!");
+        }
+        delete[] static_cast<T*>(output);
+    }
+    ///////////////////////////////////////////////
 }
 
-void largeTest_rsConv5_5(const char * path, bool isValid)
+void largeTest_rsConv_U8(const char * path)
 {
-    //intrinsic & myScript
+
 }
 
 void dummyTest(const char * path)

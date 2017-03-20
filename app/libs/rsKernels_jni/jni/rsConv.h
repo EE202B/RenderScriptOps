@@ -60,6 +60,7 @@ struct rsConvInfo{
 // use Intrinsic, memcpy, input must be padded, conv kernel stride is fixed at 1, the output padded area are garbage
 // Only support 3x3 and 5x5
 // TODO: U8 mode 
+// Deprecated!
 template <typename T>
 void rsConv_intrinsic(const char * path, void* filter, void* input, void*& output, rsConvInfo convInfo)
 {
@@ -78,7 +79,7 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     ef = Element::F32(rs);
     if(convInfo.data_format==4){
         e = Element::F32(rs);
-    }else{
+    }else if(convInfo.data_format==1){
         e = Element::U8(rs);
     }
     size_t e_bytes = e->getSizeBytes();
@@ -253,7 +254,7 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
                 rs->finish();
             }
         }
-    }else{
+    }else if(convInfo.data_format==1){
         for(size_t i=0;i<output_filters_reponse.size();++i){
             sp<Allocation > output_alloc_filter = Allocation::createTyped(rs, output_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
             output_alloc_final.push_back(output_alloc_filter);
@@ -323,7 +324,7 @@ void rsConv_script(const char * path, void* filter, void* input, void*& output, 
     sp<const Element> e;
     if(convInfo.data_format==4){
         e = Element::F32(rs);
-    }else{
+    }else if(convInfo.data_format==1){
         e = Element::U8(rs);
     }
     size_t e_bytes = e->getSizeBytes();
@@ -365,9 +366,13 @@ void rsConv_script(const char * path, void* filter, void* input, void*& output, 
 
     sc->set_filters(allFilters_alloc);
     sc->set_inputs(allInputs_alloc);
-
     sc->invoke_initParam();
-    sc->forEach_launchConvF32(allOutputs_alloc);
+
+    if(convInfo.data_format==4){
+        sc->forEach_launchConvF32(allOutputs_alloc);
+    }else if(convInfo.data_format==1){
+        sc->forEach_launchConvU8(allOutputs_alloc);
+    }
 
     // sync
     allOutputs_alloc->copy1DTo(output);
