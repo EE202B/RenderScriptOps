@@ -4,7 +4,7 @@
 #include "rsMatmul_test_data.h"
 
 
-RAW_DATA_TYPE a_data[a_count] = {
+unsigned char a_data[a_count] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -29499,7 +29499,7 @@ RAW_DATA_TYPE a_data[a_count] = {
   10, 0,
 };
 
-RAW_DATA_TYPE b_data[b_count] = {
+unsigned char b_data[b_count] = {
   82, 81, 82, 72, 70, 90, 88, 77, 85, 68,
   76, 88, 77, 90, 86, 94, 88, 88, 78, 74,
   89, 80, 75, 81, 70, 89, 81, 77, 93, 95,
@@ -51621,7 +51621,7 @@ RAW_DATA_TYPE b_data[b_count] = {
   80, 83, 78, 73,
 };
 
-RAW_DATA_TYPE expected_c_data[c_count] = {
+unsigned char expected_c_data[c_count] = {
   166, 113, 100, 112, 92, 110, 111, 106, 135, 122,
   107, 118, 103, 122, 139, 115, 133, 93, 102, 103,
   108, 107, 92, 93, 105, 111, 148, 115, 108, 121,
@@ -56541,14 +56541,14 @@ RAW_DATA_TYPE expected_c_data[c_count] = {
 };
 
 
-RAW_DATA_TYPE* getA(){
+unsigned char* getA(){
     return a_data;
 }
 
-RAW_DATA_TYPE* getB(){
+unsigned char* getB(){
     return b_data;
 }
 
-RAW_DATA_TYPE* getC(){
+unsigned char* getC(){
     return expected_c_data;
 }

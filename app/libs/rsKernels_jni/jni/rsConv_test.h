@@ -4,6 +4,8 @@
 #include "rsConv.h"
 #include "rsConv_test_data.h"
 
+#define ALLOWED_ERROR 0.000001f
+
 namespace androidrs {
 namespace conv {
 

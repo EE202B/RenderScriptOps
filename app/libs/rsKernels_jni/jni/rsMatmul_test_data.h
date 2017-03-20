@@ -9,8 +9,6 @@ const int a_count = (m * k);
 const int b_count = (n * k);
 const int c_count = (m * n);
 
-#define RAW_DATA_TYPE unsigned char
-
-RAW_DATA_TYPE* getA();
-RAW_DATA_TYPE* getB();
-RAW_DATA_TYPE* getC();
+unsigned char* getA();
+unsigned char* getB();
+unsigned char* getC();

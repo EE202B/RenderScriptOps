@@ -309,6 +309,7 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
 
 // Use custom script, no memcpy, input don't need padding, conv kernel stride is user defined, the output size smaller than input
 // T(conv(T(A), T(B)))
+// pad_col must = filter_col / 2
 template <typename T>
 void rsConv_script(const char * path, void* filter, void* input, void*& output, rsConvInfo convInfo)
 {

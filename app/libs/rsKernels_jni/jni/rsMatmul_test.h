@@ -10,40 +10,40 @@
 
 #define ALLOWED_ERROR 0.000001f
 
-namespace matmultest {
+namespace androidrs {
 
-namespace sgemm {
+namespace matmul {
 
-#define DATA_TYPE float
-
-void getLargeData(DATA_TYPE*& a, DATA_TYPE*& b, int m, int n, int k)
+template <typename T>
+void getLargeData(T*& a, T*& b, int m, int n, int k)
 {
     auto a_raw = getA();
     auto b_raw = getB();
 
-    a = new DATA_TYPE[m*k];
-    b = new DATA_TYPE[n*k];
+    a = new T[m*k];
+    b = new T[n*k];
 
     for(int i=0;i<m*k;++i){
-        a[i] = (DATA_TYPE)a_raw[i];
+        a[i] = (T)a_raw[i];
     }
     for(int i=0;i<n*k;++i){
-        b[i] = (DATA_TYPE)b_raw[i];
+        b[i] = (T)b_raw[i];
     }
 }
 
-void getRefResult(DATA_TYPE* a, DATA_TYPE* b, void*& c, int m, int n, int k)
+template <typename T>
+void getRefResult(T* a, T* b, void*& c, int m, int n, int k)
 {
-    c = new DATA_TYPE[m*n];
-    DATA_TYPE* c_casted = static_cast<DATA_TYPE*>(c);
+    c = new T[m*n];
+    T* c_casted = static_cast<T*>(c);
 
     for (int j = 0; j < n; j++) {
         for (int i = 0; i < m; i++) {
-            DATA_TYPE total = 0.f;
+            T total = 0;
             for (int l = 0; l < k; l++) {
                 int a_index = ((i * k) + l);
                 int b_index = ((l * n) + j);
-                DATA_TYPE mult = a[a_index] * b[b_index];
+                T mult = a[a_index] * b[b_index];
                 total += mult;
             }
             int c_index = ((i * n) + j);
@@ -52,7 +52,8 @@ void getRefResult(DATA_TYPE* a, DATA_TYPE* b, void*& c, int m, int n, int k)
     }
 }
 
-DATA_TYPE calcL2Norm(DATA_TYPE* input, int sz)
+template <typename T>
+float calcL2Norm(T* input, int sz)
 {
     float l2Norm = 0.f;
     for (int i = 0; i < sz; ++i) {
@@ -61,20 +62,21 @@ DATA_TYPE calcL2Norm(DATA_TYPE* input, int sz)
     return l2Norm;
 }
 
+template <typename T>
 bool testWithTolerance(void* out, void* ref, int m, int n)
 {
-    DATA_TYPE* casted_out = static_cast<DATA_TYPE*>(out);
-    DATA_TYPE* casted_ref = static_cast<DATA_TYPE*>(ref);
+    T* casted_out = static_cast<T*>(out);
+    T* casted_ref = static_cast<T*>(ref);
 
-    DATA_TYPE l2NormOut = calcL2Norm(casted_out, m*n);
-    DATA_TYPE l2NormRef = calcL2Norm(casted_ref, m*n);
+    float l2NormOut = calcL2Norm<T>(casted_out, m*n);
+    float l2NormRef = calcL2Norm<T>(casted_ref, m*n);
 
-    DATA_TYPE tolerance = ALLOWED_ERROR * (l2NormOut < l2NormRef ? l2NormOut : l2NormRef);
+    float tolerance = ALLOWED_ERROR * (l2NormOut < l2NormRef ? l2NormOut : l2NormRef);
     tolerance /= m * n;
 
     for (int i = 0; i < m*n; ++i) {
-        DATA_TYPE err = casted_out[i] - casted_ref[i];
-        DATA_TYPE absErr = err * err;
+        float err = casted_out[i] - casted_ref[i];
+        float absErr = err * err;
         if (absErr > tolerance) {
             return false;
         }
@@ -82,18 +84,19 @@ bool testWithTolerance(void* out, void* ref, int m, int n)
     return true;
 }
 
-void SmallTest(const char * path, bool isValid)
+template <typename T>
+void smallTest(const char * path)
 {
     int m=2, n=4, k=3;
     int a_sz = m*k, b_sz = n*k, c_sz = m*n;
-    DATA_TYPE* a_ori = new DATA_TYPE[a_sz];
-    DATA_TYPE* b_ori = new DATA_TYPE[b_sz];
+    T* a_ori = new T[a_sz];
+    T* b_ori = new T[b_sz];
 
-    int a_data[] = {
+    T a_data[] = {
                 1, 2, 3,
                 4, 5, 6,
     };
-    int b_data[] = {
+    T b_data[] = {
                 11, 7, 3,
                 10, 6, 2,
                 9, 5, 1,
@@ -107,34 +110,38 @@ void SmallTest(const char * path, bool isValid)
         b_ori[i] = b_data[i];
     }
 
-    void *c_out = new DATA_TYPE[m*n];
-    rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
+    void *c_out = new T[m*n];
+    if(sizeof(T)==4){
+        rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
+    }else if(sizeof(T)==1){
+        rsMatmul_bnnm(path, static_cast<void*>(a_ori), 0, static_cast<void*>(b_ori), 0, c_out, 0, m, n, k, 1);
+    }
 
-    if(isValid){
-        void* c_ref;
-        getRefResult(a_ori, b_ori, c_ref, m, n, k);
+    void* c_ref;
+    getRefResult<T>(a_ori, b_ori, c_ref, m, n, k);
 
-        if(!testWithTolerance(c_out, c_ref, m, n)){
-            LOGE("sgemm small test failed!");
-        }else{
-            LOGI("sgemm small test passed!");
-        }
-        delete[] static_cast<DATA_TYPE*>(c_ref);
+    if(!testWithTolerance<T>(c_out, c_ref, m, n)){
+        LOGE("rsMatmul small test failed!");
+    }else{
+        LOGI("rsMatmul small test passed!");
     }
 
     delete[] a_ori;
     delete[] b_ori;
-    delete[] static_cast<DATA_TYPE*>(c_out);
+    delete[] static_cast<T*>(c_out);
+    delete[] static_cast<T*>(c_ref);
 }
 
-void MediumTest(const char * path, bool isValid)
+
+template <typename T>
+void mediumTest(const char * path)
 {
     int m=7, n=9, k=23;
     int a_sz = m*k, b_sz = n*k, c_sz = m*n;
-    DATA_TYPE* a_ori = new DATA_TYPE[a_sz];
-    DATA_TYPE* b_ori = new DATA_TYPE[b_sz];
+    T* a_ori = new T[a_sz];
+    T* b_ori = new T[b_sz];
 
-    int a_data[] = {
+    T a_data[] = {
                 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
                 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1,
                 1, 23, 2, 22, 3, 21, 4, 20, 5, 19, 6, 18, 7, 17, 8, 16, 9, 15, 10, 14, 11, 13, 12,
@@ -143,7 +150,7 @@ void MediumTest(const char * path, bool isValid)
                 3, 1, 4, 1, 5, 8, 2, 3, 1, 14, 11, 15, 18, 12, 13, 11, 14, 11, 15, 18, 12, 13, 11,
                 8, 0, 5, 8, 1, 3, 7, 5, 7, 13, 10, 23, 13, 11, 17, 23, 12, 19, 17, 13, 14, 10, 19,
     };
-    int b_data[] = {
+    T b_data[] = {
                 0, 2, 4, 6, 8, 10, 1, 3, 5, 7, 9, 11, 0, 2, 4, 6, 8, 10, 1, 3, 5, 7, 9,
                 0, 20, 40, 60, 80, 10, 11, 13, 15, 17, 19, 21, 10, 12, 14, 6, 8, 10, 1, 3, 5, 7, 9,
                 1, 21, 41, 61, 81, 11, 12, 14, 16, 18, 20, 22, 11, 13, 15, 7, 9, 11, 2, 4, 6, 8, 9,
@@ -162,64 +169,61 @@ void MediumTest(const char * path, bool isValid)
         b_ori[i] = b_data[i];
     }
 
-    void *c_out = new DATA_TYPE[m*n];
-    rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
+    void *c_out = new T[m*n];
+    if(sizeof(T)==4){
+        rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
+    }else if(sizeof(T)==1){
+        // rsMatmul_bnnm
+    }
 
-    if(isValid){
-        void* c_ref;
-        getRefResult(a_ori, b_ori, c_ref, m, n, k);
 
-        if(!testWithTolerance(c_out, c_ref, m, n)){
-            LOGE("sgemm medium test failed!");
-        }else{
-            LOGI("sgemm medium test passed!");
-        }
-        delete[] static_cast<DATA_TYPE*>(c_ref);
+    void* c_ref;
+    getRefResult<T>(a_ori, b_ori, c_ref, m, n, k);
+
+    if(!testWithTolerance<T>(c_out, c_ref, m, n)){
+        LOGE("rsMatmul medium test failed!");
+    }else{
+        LOGI("rsMatmul medium test passed!");
     }
 
     delete[] a_ori;
     delete[] b_ori;
-    delete[] static_cast<DATA_TYPE*>(c_out);
+    delete[] static_cast<T*>(c_out);
+    delete[] static_cast<T*>(c_ref);
 }
 
-void LargeTest(const char * path, bool isValid)
+template <typename T>
+void largeTest(const char * path)
 {
     int m=256, n=192, k=1152;
     int a_sz = m*k, b_sz = n*k, c_sz = m*n;
-    DATA_TYPE *a_ori, *b_ori;
-    getLargeData(a_ori, b_ori, m, n, k);
+    T *a_ori, *b_ori;
+    getLargeData<T>(a_ori, b_ori, m, n, k);
 
-    void *c_out = new DATA_TYPE[m*n];
-    rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
+    void *c_out = new T[m*n];
+    if(sizeof(T)==4){
+        rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
+    }else if(sizeof(T)==1){
+        // rsMatmul_bnnm
+    }
 
-    if(isValid){
-        void* c_ref;
-        getRefResult(a_ori, b_ori, c_ref, m, n, k);
+    void* c_ref;
+    getRefResult<T>(a_ori, b_ori, c_ref, m, n, k);
 
-        if(!testWithTolerance(c_out, c_ref, m, n)){
-            LOGE("sgemm large test failed!");
-        }else{
-            LOGI("sgemm large test passed!");
-        }
-        delete[] static_cast<DATA_TYPE*>(c_ref);
+    if(!testWithTolerance<T>(c_out, c_ref, m, n)){
+        LOGE("rsMatmul large test failed!");
+    }else{
+        LOGI("rsMatmul large test passed!");
     }
 
     delete[] a_ori;
     delete[] b_ori;
-    delete[] static_cast<DATA_TYPE*>(c_out);
+    delete[] static_cast<T*>(c_out);
+    delete[] static_cast<T*>(c_ref);
 }
 
-#undef DATA_TYPE
+
 }
-
-namespace bnnm{
-#define DATA_TYPE uint8_t
-
-//TODO: bnnm test case
-
-#undef DATA_TYPE
-}
-
 }
 
 #endif //RSKERNELSTEST_RSMATMUL_TEST_H
