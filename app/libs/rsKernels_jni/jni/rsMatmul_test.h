@@ -37,17 +37,33 @@ void getRefResult(T* a, T* b, void*& c, int m, int n, int k)
     c = new T[m*n];
     T* c_casted = static_cast<T*>(c);
 
-    for (int j = 0; j < n; j++) {
-        for (int i = 0; i < m; i++) {
-            T total = 0;
-            for (int l = 0; l < k; l++) {
-                int a_index = ((i * k) + l);
-                int b_index = ((l * n) + j);
-                T mult = a[a_index] * b[b_index];
-                total += mult;
+    if(sizeof(T)==4){
+        for (int j = 0; j < n; j++) {
+            for (int i = 0; i < m; i++) {
+                T total = 0;
+                for (int l = 0; l < k; l++) {
+                    int a_index = ((i * k) + l);
+                    int b_index = ((l * n) + j);
+                    T mult = a[a_index] * b[b_index];
+                    total += mult;
+                }
+                int c_index = ((i * n) + j);
+                c_casted[c_index] = total;
             }
-            int c_index = ((i * n) + j);
-            c_casted[c_index] = total;
+        }
+    }else if(sizeof(T)==1){
+        for(int j = 0; j < n; ++j){
+            for(int i = 0; i < m; ++i){
+                T total = 0;
+                for (int l = 0; l < k; l++) {
+                    int a_index = ((i * k) + l);
+                    int b_index = ((j * k) + l);
+                    T mult = a[a_index] * b[b_index];
+                    total += mult;
+                }
+                int c_index = ((i * n) + j);
+                c_casted[c_index] = total;
+            }
         }
     }
 }
@@ -114,7 +130,7 @@ void smallTest(const char * path)
     if(sizeof(T)==4){
         rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
     }else if(sizeof(T)==1){
-        rsMatmul_bnnm(path, static_cast<void*>(a_ori), 0, static_cast<void*>(b_ori), 0, c_out, 0, m, n, k, 1);
+        rsMatmul_bnnm(path, static_cast<void*>(a_ori), 0, static_cast<void*>(b_ori), 0, c_out, 0, m, n, k, (1<<21));
     }
 
     void* c_ref;
@@ -173,7 +189,7 @@ void mediumTest(const char * path)
     if(sizeof(T)==4){
         rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
     }else if(sizeof(T)==1){
-        rsMatmul_bnnm(path, static_cast<void*>(a_ori), 0, static_cast<void*>(b_ori), 0, c_out, 0, m, n, k, 1);
+        rsMatmul_bnnm(path, static_cast<void*>(a_ori), 13, static_cast<void*>(b_ori), 23, c_out, 2121, m, n, k, 132359);
     }
 
     void* c_ref;
@@ -203,7 +219,7 @@ void largeTest(const char * path)
     if(sizeof(T)==4){
         rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
     }else if(sizeof(T)==1){
-        rsMatmul_bnnm(path, static_cast<void*>(a_ori), 0, static_cast<void*>(b_ori), 0, c_out, 0, m, n, k, 1);
+        rsMatmul_bnnm(path, static_cast<void*>(a_ori), 0, static_cast<void*>(b_ori), 84, c_out, 74980, m, n, k, 3401);
     }
 
     void* c_ref;

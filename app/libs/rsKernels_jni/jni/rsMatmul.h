@@ -67,17 +67,6 @@ void rsMatmul_bnnm(const char * path, void* a_ptr, int a_off, void* b_ptr, int b
     sc->BNNM(a_alloc, a_off, b_alloc, b_off, c_alloc, c_off, c_mult);
 
     c_alloc->copy2DRangeTo(0, 0, n, m, c_ptr);
-    // c_alloc->copy1DRangeTo(0, n*m, c_ptr);
-
-    // size_t stride;
-    // auto ptr = static_cast<uint8_t*>(c_alloc->getPointer(&stride));
-    // LOGE("stride: %d", stride);
-    // for (size_t i = 0; i < m; i++) {
-    //     for (size_t j = 0; j < n; j++) {
-    //         LOGI("%d", ptr[i*stride+ j]);
-    //     }
-    //     LOGE("One row");
-    // }
 };
 
 }
