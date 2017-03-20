@@ -13,6 +13,7 @@
 #include "ScriptC_decodeFilter.h"
 #include "ScriptC_decodeInput.h"
 #include "ScriptC_decodeOutput.h"
+#include "ScriptC_mScriptConv.h"
 
 using namespace android::RSC;
 
@@ -42,7 +43,7 @@ struct rsConvInfo{
     int out_cols;
 
     int batch;
-    int data_format; // 0 F32, 1 U8
+    int data_format; // 4 F32, 1 U8
 
     rsConvInfo(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int n9, int n10, int n11, int n12, int n13, int n14){
         in_depth=n1;
@@ -57,6 +58,7 @@ struct rsConvInfo{
 };
 
 // use Intrinsic, memcpy, input must be padded, conv kernel stride is fixed at 1, the output padded area are garbage
+// Only support 3x3 and 5x5
 // TODO: U8 mode 
 template <typename T>
 void rsConv_intrinsic(const char * path, void* filter, void* input, void*& output, rsConvInfo convInfo)
@@ -74,7 +76,7 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     sp<const Element> e, ef;
 
     ef = Element::F32(rs);
-    if(convInfo.data_format==0){
+    if(convInfo.data_format==4){
         e = Element::F32(rs);
     }else{
         e = Element::U8(rs);
@@ -242,7 +244,7 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     // sum up
     std::vector<sp<Allocation>> output_alloc_final;
     sp<ScriptC_utils> sc = new ScriptC_utils(rs);
-    if(convInfo.data_format==0){
+    if(convInfo.data_format==4){
         for(size_t i=0;i<output_filters_reponse.size();++i){
             sp<Allocation > output_alloc_filter = Allocation::createTyped(rs, output_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
             output_alloc_final.push_back(output_alloc_filter);
@@ -306,61 +308,69 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
 
 // Use custom script, no memcpy, input don't need padding, conv kernel stride is user defined, the output size smaller than input
 // T(conv(T(A), T(B)))
-
 template <typename T>
-void rsConv1_script(const char * path, void* filter, void* input, void*& output, rsConvInfo convInfo){
-    
-};
-
-template <typename T>
-void rsConv3_script(const char * path, void* filter, void* input, void*& output, rsConvInfo convInfo)
+void rsConv_script(const char * path, void* filter, void* input, void*& output, rsConvInfo convInfo)
 {
-    // sp<RS> rs = new RS();
-    // rs->init(path);
-    // sp<const Element> e;
-    // size_t filter_stride = convInfo.out_depth * convInfo.in_depth;
-    // size_t input_stride = convInfo.in_depth;
+    const size_t filter_w = convInfo.filter_rows;
+    const size_t filter_sz = filter_w * filter_w;
+    const size_t filter_stride_e = convInfo.out_depth * convInfo.in_depth;
+    const size_t input_stride_e = convInfo.in_depth;
+    const size_t padded_rows = convInfo.input_rows + 2*convInfo.pad_rows;
+    const size_t padded_cols = convInfo.input_cols + 2*convInfo.pad_cols;
 
-    // const size_t filter_w = 3;
-    // const size_t filter_sz = filter_w * filter_w;
+    sp<RS> rs = new RS();
+    rs->init(path);
+    sp<const Element> e;
+    if(convInfo.data_format==4){
+        e = Element::F32(rs);
+    }else{
+        e = Element::U8(rs);
+    }
+    size_t e_bytes = e->getSizeBytes();
 
-    // if(convInfo.data_format==0){
-    //     e = Element::F32(rs);
-    // }else{
-    //     return;
-    // }
+    // alloc filter
+    sp<const Type> all_filters_t = Type::create(rs, e, filter_stride_e*filter_sz,
+                                                       0,
+                                                       0);
+    sp<Allocation > allFilters_alloc = Allocation::createTyped(rs, all_filters_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+    allFilters_alloc->copy1DFrom(filter);
 
-    // size_t e_bytes = e->getSizeBytes();
-    // int filters_total_size = convInfo.filter_cols * convInfo.filter_rows * convInfo.in_depth * convInfo.out_depth;
+    // alloc input
+    sp<const Type> all_inputs_t = Type::create(rs, e, convInfo.in_depth*convInfo.input_rows*convInfo.input_cols,
+                                                       0,
+                                                       0);
+    sp<Allocation > allInputs_alloc = Allocation::createTyped(rs, all_inputs_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+    allInputs_alloc->copy1DFrom(input);
 
-    // std::vector<std::vector<float* > > mFilters2D(
-    //     convInfo.out_depth, std::vector<float* >(convInfo.in_depth, nullptr)
-    // );
+    //alloc output
+    sp<const Type> all_outputs_t = Type::create(rs, e, convInfo.out_depth*convInfo.out_rows*convInfo.out_cols,
+                                                       0,
+                                                       0);
+    sp<Allocation > allOutputs_alloc = Allocation::createTyped(rs, all_outputs_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
 
-    // for(size_t i=0;i<convInfo.in_depth;++i){
-    //     for(size_t j=0;j<convInfo.out_depth;++j){
-    //         mFilters2D[j][i] = static_cast<float*>(filter) + (i * convInfo.out_depth + j);
-    //     }
-    // }
-    // /*
-    // for(int i=0;i<mFilters2D.size();++i){
-    //     for(int j = 0;j<mFilters2D[i].size();++j){
-    //         for(int k=0;k<filter_sz;k++){
-    //          LOGI("%f", mFilters2D[i][j][k*filter_stride]);
-    //         }
-    //     }
-    // }*/
+    //kernel
+    sp<ScriptC_mScriptConv> sc = new ScriptC_mScriptConv(rs);
+    sc->set_in_depth(convInfo.in_depth);
+    sc->set_input_rows(convInfo.input_rows);
+    sc->set_input_cols(convInfo.input_cols);
+    sc->set_filter_rows(convInfo.filter_rows);
+    sc->set_filter_cols(convInfo.filter_cols);
+    sc->set_stride_rows(convInfo.stride_rows);
+    sc->set_stride_cols(convInfo.stride_cols);
+    sc->set_pad_rows(convInfo.pad_rows);
+    sc->set_pad_cols(convInfo.pad_cols);
+    sc->set_out_depth(convInfo.out_depth);
+    sc->set_out_rows(convInfo.out_rows);
+    sc->set_out_cols(convInfo.out_cols);
 
-};
+    sc->set_filters(allFilters_alloc);
+    sc->set_inputs(allInputs_alloc);
 
-template <typename T>
-void rsConv5_script(const char * path, void* filter, void* input, void*& output, rsConvInfo convInfo){
-    
-};
+    sc->invoke_initParam();
+    sc->forEach_launchConvF32(allOutputs_alloc);
 
-template <typename T>
-void rsConv7_script(const char * path, void* filter, void* input, void*& output, rsConvInfo convInfo){
-    
+    // sync
+    allOutputs_alloc->copy1DTo(output);
 };
 
 }

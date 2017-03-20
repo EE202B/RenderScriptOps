@@ -85,18 +85,21 @@ void smallTest_rsConv3_3(const char * path, bool isValid)
     //     4, 5, 6, -2, 0, 2, -5, 5, -3, 7, -5, 1, -6, 5, -1, 1, -6, 2,
     // };
 
-    rsConvInfo smallConvInfo(3, 5, 5, 3, 3, 2, 2, 1, 1, 2, 3, 3, 1, 0);
-    if(sizeof(T)==1){
-        smallConvInfo.data_format = 1;
+    void* output = new T[18];
+    rsConvInfo smallConvInfo(3, 5, 5, 3, 3, 2, 2, 1, 1, 2, 3, 3, 1, sizeof(T));
+
+    rsConv_intrinsic<T>(path, static_cast<void*>(filters), static_cast<void*>(input), output, smallConvInfo);
+    if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), 18)){
+        LOGE("rsConv_intrinsic 3x3 small test failed!");
+    }else{
+        LOGI("rsConv_intrinsic 3x3 small test passed!");
     }
 
-    void* output = new T[18];
-    rsConv_intrinsic<T>(path, static_cast<void*>(filters), static_cast<void*>(input), output, smallConvInfo);
-
+    rsConv_script<T>(path, static_cast<void*>(filters), static_cast<void*>(input), output, smallConvInfo);
     if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), 18)){
-        LOGE("rsConv3_intrinsic small test failed!");
+        LOGE("rsConv_script 3x3 small test failed!");
     }else{
-        LOGI("rsConv3_intrinsic small test passed!");
+        LOGI("rsConv_script 3x3 small test passed!");
     }
 
     // for(int i=0;i<18;++i){
