@@ -57,7 +57,7 @@ struct rsConvInfo{
 // TODO: U8 mode 
 // Deprecated!
 template <typename T>
-void rsConv_intrinsic(void* filter, void* input, void*& output, rsConvInfo convInfo)
+void rsConv_intrinsic(void* filter, void* input, void* output, rsConvInfo convInfo)
 {
     // assume square filter
     const size_t filter_w = convInfo.filter_rows;
@@ -306,7 +306,7 @@ void rsConv_intrinsic(void* filter, void* input, void*& output, rsConvInfo convI
 // Use custom script, no memcpy, input don't need padding, conv kernel stride is user defined, the output size smaller than input
 // T(conv(T(A), T(B)))
 template <typename T>
-void rsConv_script(void* filter, void* input, void*& output, rsConvInfo convInfo)
+void rsConv_script(void* filter, void* input, void* output, rsConvInfo convInfo)
 {
     const size_t filter_w = convInfo.filter_rows;
     const size_t filter_sz = filter_w * filter_w;
