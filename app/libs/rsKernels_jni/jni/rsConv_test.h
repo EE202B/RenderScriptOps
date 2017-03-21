@@ -177,7 +177,6 @@ void tfTest_F32(const char * path)
 
     ///////////////////////////////////////////////
     // conv 7 test
-    // failed because padding is 2 WTF???
     {
         auto input = getConv7_input_F32();
         auto filter = getConv7_filter_F32();

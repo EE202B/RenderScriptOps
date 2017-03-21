@@ -86,8 +86,8 @@ uint8_t RS_KERNEL launchConvU8(uint32_t x, uint32_t y)
     uint32_t out_z = x % out_depth;
     uint32_t out_y = (x / out_depth) % out_rows;
     uint32_t out_x = (x / out_depth) / out_rows;
-    uint32_t in_centerX = out_x * stride_cols;
-    uint32_t in_centerY = out_y * stride_rows;
+    uint32_t in_centerX = out_x * stride_cols + filter_hf - pad_cols;
+    uint32_t in_centerY = out_y * stride_rows + filter_hf - pad_rows;
 
     uint32_t x_lo = max((int32_t)in_centerX-filter_hf, 0);
     uint32_t x_hi = min((int32_t)in_centerX+filter_hf, input_cols-1);
