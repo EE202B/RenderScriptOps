@@ -90,14 +90,14 @@ void smallTest(const char * path)
     void* output = new T[18];
     rsConvInfo smallConvInfo(3, 5, 5, 3, 3, 2, 2, 1, 1, 2, 3, 3, 1, sizeof(T));
 
-    rsConv_intrinsic<T>(path, static_cast<void*>(filters), static_cast<void*>(input), output, smallConvInfo);
+    rsConv_intrinsic<T>(static_cast<void*>(filters), static_cast<void*>(input), output, smallConvInfo);
     if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), 18)){
         LOGE("rsConv_intrinsic 3x3 float small test failed!");
     }else{
         LOGI("rsConv_intrinsic 3x3 float small test passed!");
     }
 
-    // rsConv_script<T>(path, static_cast<void*>(filters), static_cast<void*>(input), output, smallConvInfo);
+    // rsConv_script<T>(static_cast<void*>(filters), static_cast<void*>(input), output, smallConvInfo);
     // if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), 18)){
     //     LOGE("rsConv_script small test failed!");
     // }else{
@@ -125,7 +125,7 @@ void tfTest_F32(const char * path)
         rsConvInfo convInfo(508, 4, 4, 1, 1, 1, 1, 0, 0, 128, 4, 4, 1, sizeof(T));
 
         void* output = new T[outputSz];
-        rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
+        rsConv_script<T>(static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
         if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
             LOGE("rsConv_script 1x1 float TF test failed!");
         }else{
@@ -145,7 +145,7 @@ void tfTest_F32(const char * path)
         rsConvInfo convInfo(64, 56, 56, 3, 3, 1, 1, 1, 1, 192, 56, 56, 1, sizeof(T));
 
         void* output = new T[outputSz];
-        rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
+        rsConv_script<T>(static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
         if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
             LOGE("rsConv_script 3x3 float TF test failed!");
         }else{
@@ -165,7 +165,7 @@ void tfTest_F32(const char * path)
         rsConvInfo convInfo(16, 28, 28, 5, 5, 1, 1, 2, 2, 32, 28, 28, 1, sizeof(T));
 
         void* output = new T[outputSz];
-        rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
+        rsConv_script<T>(static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
         if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
             LOGE("rsConv_script 5x5 float TF test failed!");
         }else{
@@ -186,11 +186,11 @@ void tfTest_F32(const char * path)
         rsConvInfo convInfo(3, 224, 224, 7, 7, 2, 2, 2, 2, 64, 112, 112, 1, sizeof(T));
 
         void* output = new T[outputSz];
-        rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
+        rsConv_script<T>(static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
         if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
-            LOGE("rsConv_script 7x7 float TF large test failed!");
+            LOGE("rsConv_script 7x7 float TF test failed!");
         }else{
-            LOGI("rsConv_script 7x7 float TF large test passed!");
+            LOGI("rsConv_script 7x7 float TF test passed!");
         }
         delete[] static_cast<T*>(output);
     }

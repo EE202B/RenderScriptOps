@@ -13,7 +13,7 @@ namespace androidrs {
 namespace matmul {
 
 // float
-void rsMatmul_sgemm(const char * path, void* a_ptr, bool a_trans, void* b_ptr, bool b_trans, void*& c_ptr,
+void rsMatmul_sgemm(void* a_ptr, bool a_trans, void* b_ptr, bool b_trans, void*& c_ptr,
                     int m, int n, int k, float alpha, float beta)
 {
     if(!androidrs::mRS->getContext()){
@@ -44,7 +44,7 @@ void rsMatmul_sgemm(const char * path, void* a_ptr, bool a_trans, void* b_ptr, b
 };
 
 // uint8_t
-void rsMatmul_bnnm(const char * path, void* a_ptr, int a_off, void* b_ptr, int b_off, void*& c_ptr, int c_off,
+void rsMatmul_bnnm(void* a_ptr, int a_off, void* b_ptr, int b_off, void*& c_ptr, int c_off,
                     int m, int n, int k, int c_mult)
 {
     if(!androidrs::mRS->getContext()){

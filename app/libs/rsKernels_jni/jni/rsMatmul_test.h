@@ -129,9 +129,9 @@ void smallTest(const char * path)
 
     void *c_out = new T[m*n];
     if(sizeof(T)==4){
-        rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
+        rsMatmul_sgemm(static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
     }else if(sizeof(T)==1){
-        rsMatmul_bnnm(path, static_cast<void*>(a_ori), 0, static_cast<void*>(b_ori), 0, c_out, 0, m, n, k, (1<<21));
+        rsMatmul_bnnm(static_cast<void*>(a_ori), 0, static_cast<void*>(b_ori), 0, c_out, 0, m, n, k, (1<<21));
     }
 
     void* c_ref;
@@ -188,9 +188,9 @@ void mediumTest(const char * path)
 
     void *c_out = new T[m*n];
     if(sizeof(T)==4){
-        rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
+        rsMatmul_sgemm(static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
     }else if(sizeof(T)==1){
-        rsMatmul_bnnm(path, static_cast<void*>(a_ori), 13, static_cast<void*>(b_ori), 23, c_out, 2121, m, n, k, 132359);
+        rsMatmul_bnnm(static_cast<void*>(a_ori), 13, static_cast<void*>(b_ori), 23, c_out, 2121, m, n, k, 132359);
     }
 
     void* c_ref;
@@ -218,9 +218,9 @@ void largeTest(const char * path)
 
     void *c_out = new T[m*n];
     if(sizeof(T)==4){
-        rsMatmul_sgemm(path, static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
+        rsMatmul_sgemm(static_cast<void*>(a_ori), false, static_cast<void*>(b_ori), false, c_out, m, n, k, 1, 0);
     }else if(sizeof(T)==1){
-        rsMatmul_bnnm(path, static_cast<void*>(a_ori), 0, static_cast<void*>(b_ori), 84, c_out, 74980, m, n, k, 3401);
+        rsMatmul_bnnm(static_cast<void*>(a_ori), 0, static_cast<void*>(b_ori), 84, c_out, 74980, m, n, k, 3401);
     }
 
     void* c_ref;
@@ -252,7 +252,7 @@ void tfTest_F32(const char * path)
 
         void* c_out = new T[outsz];
         if(sizeof(T)==4){
-            rsMatmul_sgemm(path, static_cast<void*>(A), false, static_cast<void*>(B), false, c_out, m, n, k, 1, 0);
+            rsMatmul_sgemm(static_cast<void*>(A), false, static_cast<void*>(B), false, c_out, m, n, k, 1, 0);
         }
 
         if(!testWithTolerance<T>(c_out, c_ref, m, n)){
@@ -281,7 +281,7 @@ void tfTest_U8(const char * path)
 
         void* c_out = new Tin[outsz];
         if(sizeof(Tin)==1){
-            rsMatmul_bnnm(path, static_cast<void*>(A), 173, static_cast<void*>(B), 139, c_out, 0, m, n, k, 1);
+            rsMatmul_bnnm(static_cast<void*>(A), 173, static_cast<void*>(B), 139, c_out, 0, m, n, k, 1);
         }
 
         if(!testWithTolerance<Tin>(c_out, c_ref, m, n)){
