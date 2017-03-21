@@ -21,7 +21,7 @@ public:
 	};
 	void print(){
 		stopTimer();
-		LOGI("Time taken: %.8fs", elapsed_seconds);
+		LOGD("Time taken: %.8fs", elapsed_seconds);
 	};
 	
 private:

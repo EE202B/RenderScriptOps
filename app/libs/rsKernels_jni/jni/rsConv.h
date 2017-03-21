@@ -5,22 +5,17 @@
 #ifndef RSKERNELSTEST_RSCONV_H
 #define RSKERNELSTEST_RSCONV_H
 
-#include "common.h"
+#include "RScommon.h"
 #include <vector>
 #include <memory>
-#include "RenderScript.h"
 #include "ScriptC_utils.h"
 #include "ScriptC_decodeFilter.h"
 #include "ScriptC_decodeInput.h"
 #include "ScriptC_decodeOutput.h"
 #include "ScriptC_mScriptConv.h"
 
-using namespace android::RSC;
 
 namespace androidrs {
-
-//TODO:
-// static sp<RS> rs = new RS();
 
 namespace conv {
 
@@ -72,26 +67,27 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     const size_t padded_rows = convInfo.input_rows + 2*convInfo.pad_rows;
     const size_t padded_cols = convInfo.input_cols + 2*convInfo.pad_cols;
 
-    sp<RS> rs = new RS();
-    rs->init(path);
+    if(!androidrs::mRS->getContext()){
+        androidrs::mRS->init(androidrs::cachePath);
+    }
     sp<const Element> e, ef;
 
-    ef = Element::F32(rs);
+    ef = Element::F32(androidrs::mRS);
     if(convInfo.data_format==4){
-        e = Element::F32(rs);
+        e = Element::F32(androidrs::mRS);
     }else if(convInfo.data_format==1){
-        e = Element::U8(rs);
+        e = Element::U8(androidrs::mRS);
     }
     size_t e_bytes = e->getSizeBytes();
 
     // decode filters
-    sp<const Type> all_filters_t = Type::create(rs, e, filter_stride_e*filter_sz,
+    sp<const Type> all_filters_t = Type::create(androidrs::mRS, e, filter_stride_e*filter_sz,
                                                        0,
                                                        0);
-    sp<Allocation > allFilters_alloc = Allocation::createTyped(rs, all_filters_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+    sp<Allocation > allFilters_alloc = Allocation::createTyped(androidrs::mRS, all_filters_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
     allFilters_alloc->copy1DFrom(filter);
     
-    sp<const Type> one_filter_t = Type::create(rs, ef, filter_sz,
+    sp<const Type> one_filter_t = Type::create(androidrs::mRS, ef, filter_sz,
                                                       0,
                                                       0);
     // std::vector<std::vector<float* > > mFilters2D(
@@ -101,10 +97,10 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     std::vector<sp<Allocation>> mFilters2D;
     for(size_t i=0;i<convInfo.in_depth;++i){
         for(size_t j=0;j<convInfo.out_depth;++j){
-            sp<Allocation> one_filter = Allocation::createTyped(rs, one_filter_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+            sp<Allocation> one_filter = Allocation::createTyped(androidrs::mRS, one_filter_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
             mFilters2D.push_back(one_filter);
 
-            sp<ScriptC_decodeFilter> sc = new ScriptC_decodeFilter(rs);
+            sp<ScriptC_decodeFilter> sc = new ScriptC_decodeFilter(androidrs::mRS);
             sc->set_filterW(filter_w);
             sc->set_decodeStride(filter_stride_e);
             sc->set_startIdx(i * convInfo.out_depth + j);
@@ -122,7 +118,7 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
             // }
         }
     }
-    rs->finish();
+    androidrs::mRS->finish();
 
     // for(int i=0;i<convInfo.out_depth;++i){
     //     for(int j = 0;j<convInfo.in_depth;++j){
@@ -137,22 +133,22 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
 
     // decode input
     // auto input_cast = static_cast<T*>(input);
-    sp<const Type> all_inputs_t = Type::create(rs, e, convInfo.in_depth*convInfo.input_rows*convInfo.input_cols,
+    sp<const Type> all_inputs_t = Type::create(androidrs::mRS, e, convInfo.in_depth*convInfo.input_rows*convInfo.input_cols,
                                                        0,
                                                        0);
-    sp<Allocation > allInputs_alloc = Allocation::createTyped(rs, all_inputs_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+    sp<Allocation > allInputs_alloc = Allocation::createTyped(androidrs::mRS, all_inputs_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
     allInputs_alloc->copy1DFrom(input);
 
-    sp<const Type> input_layer_t = Type::create(rs, e, padded_cols,
+    sp<const Type> input_layer_t = Type::create(androidrs::mRS, e, padded_cols,
                                                        padded_rows,
                                                        0);
     std::vector<sp<Allocation > > intput_layers;
-    //TODO: use rs
+
     for(size_t k=0;k<convInfo.in_depth;++k){
-        sp<Allocation > input_alloc = Allocation::createTyped(rs, input_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+        sp<Allocation > input_alloc = Allocation::createTyped(androidrs::mRS, input_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
         intput_layers.push_back(input_alloc);
 
-        sp<ScriptC_decodeInput> sc = new ScriptC_decodeInput(rs);
+        sp<ScriptC_decodeInput> sc = new ScriptC_decodeInput(androidrs::mRS);
         sc->set_inputRows(convInfo.input_rows);
         sc->set_inputCols(convInfo.input_cols);
         sc->set_padRows(convInfo.pad_rows);
@@ -173,7 +169,7 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
         //     }
         // }
     }
-    rs->finish();
+    androidrs::mRS->finish();
 
     // for(size_t k=0;k<intput_layers.size();++k){
     //     size_t input_alloc_stride;
@@ -190,7 +186,7 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     // return;
 
     // Conv
-    sp<const Type> output_layer_t = Type::create(rs, e, padded_cols,
+    sp<const Type> output_layer_t = Type::create(androidrs::mRS, e, padded_cols,
                                                         padded_rows,
                                                         0);
     std::vector<std::vector<sp<Allocation> > > output_filters_reponse(
@@ -199,10 +195,10 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     if(filter_w==3){
         for(size_t i=0;i<convInfo.out_depth;++i){       
             for(size_t j=0;j<convInfo.in_depth;++j){
-                sp<Allocation > output_alloc_filter = Allocation::createTyped(rs, output_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+                sp<Allocation > output_alloc_filter = Allocation::createTyped(androidrs::mRS, output_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
                 output_filters_reponse[i][j] = output_alloc_filter;
 
-                sp<ScriptIntrinsicConvolve3x3> sc = ScriptIntrinsicConvolve3x3::create(rs, e);
+                sp<ScriptIntrinsicConvolve3x3> sc = ScriptIntrinsicConvolve3x3::create(androidrs::mRS, e);
                 sc->setCoefficients(
                     static_cast<float*>(mFilters2D[j*convInfo.out_depth+i]->getPointer())
                 );
@@ -213,10 +209,10 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
     }else if(filter_w==5){
         for(size_t i=0;i<convInfo.out_depth;++i){       
             for(size_t j=0;j<convInfo.in_depth;++j){
-                sp<Allocation > output_alloc_filter = Allocation::createTyped(rs, output_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+                sp<Allocation > output_alloc_filter = Allocation::createTyped(androidrs::mRS, output_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
                 output_filters_reponse[i][j] = output_alloc_filter;
 
-                sp<ScriptIntrinsicConvolve5x5> sc = ScriptIntrinsicConvolve5x5::create(rs, e);
+                sp<ScriptIntrinsicConvolve5x5> sc = ScriptIntrinsicConvolve5x5::create(androidrs::mRS, e);
                 sc->setCoefficients(
                     static_cast<float*>(mFilters2D[j*convInfo.out_depth+i]->getPointer())
                 );
@@ -225,7 +221,7 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
             }
         }
     }
-    rs->finish();
+    androidrs::mRS->finish();
 
     // for(int i=0;i<output_filters_reponse.size();++i){
     //     for(int j=0;j<output_filters_reponse[i].size();++j){
@@ -244,36 +240,36 @@ void rsConv_intrinsic(const char * path, void* filter, void* input, void*& outpu
 
     // sum up
     std::vector<sp<Allocation>> output_alloc_final;
-    sp<ScriptC_utils> sc = new ScriptC_utils(rs);
+    sp<ScriptC_utils> sc = new ScriptC_utils(androidrs::mRS);
     if(convInfo.data_format==4){
         for(size_t i=0;i<output_filters_reponse.size();++i){
-            sp<Allocation > output_alloc_filter = Allocation::createTyped(rs, output_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+            sp<Allocation > output_alloc_filter = Allocation::createTyped(androidrs::mRS, output_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
             output_alloc_final.push_back(output_alloc_filter);
             for(size_t j=0;j<output_filters_reponse[i].size();++j){
                 sc->forEach_sumAlloc_F32(output_filters_reponse[i][j], output_alloc_filter);
-                rs->finish();
+                androidrs::mRS->finish();
             }
         }
     }else if(convInfo.data_format==1){
         for(size_t i=0;i<output_filters_reponse.size();++i){
-            sp<Allocation > output_alloc_filter = Allocation::createTyped(rs, output_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+            sp<Allocation > output_alloc_filter = Allocation::createTyped(androidrs::mRS, output_layer_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
             output_alloc_final.push_back(output_alloc_filter);
             for(size_t j=0;j<output_filters_reponse[i].size();++j){
                 sc->forEach_sumAlloc_U8(output_filters_reponse[i][j], output_alloc_filter);
-                rs->finish();
+                androidrs::mRS->finish();
             }
         }
     }
 
     //output
-    sp<const Type> all_outputs_t = Type::create(rs, e, convInfo.out_depth*convInfo.out_rows*convInfo.out_cols,
+    sp<const Type> all_outputs_t = Type::create(androidrs::mRS, e, convInfo.out_depth*convInfo.out_rows*convInfo.out_cols,
                                                        0,
                                                        0);
-    sp<Allocation > allOutputs_alloc = Allocation::createTyped(rs, all_outputs_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+    sp<Allocation > allOutputs_alloc = Allocation::createTyped(androidrs::mRS, all_outputs_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
 
     for(int k=0;k<output_alloc_final.size();++k){
 
-        sp<ScriptC_decodeOutput> sc = new ScriptC_decodeOutput(rs);
+        sp<ScriptC_decodeOutput> sc = new ScriptC_decodeOutput(androidrs::mRS);
         sc->set_inputRows(convInfo.input_rows);
         sc->set_inputCols(convInfo.input_cols);
         sc->set_padRows(convInfo.pad_rows);
@@ -320,38 +316,39 @@ void rsConv_script(const char * path, void* filter, void* input, void*& output, 
     const size_t padded_rows = convInfo.input_rows + 2*convInfo.pad_rows;
     const size_t padded_cols = convInfo.input_cols + 2*convInfo.pad_cols;
 
-    sp<RS> rs = new RS();
-    rs->init(path);
+    if(!androidrs::mRS->getContext()){
+        androidrs::mRS->init(androidrs::cachePath);
+    }
     sp<const Element> e;
     if(convInfo.data_format==4){
-        e = Element::F32(rs);
+        e = Element::F32(androidrs::mRS);
     }else if(convInfo.data_format==1){
-        e = Element::U8(rs);
+        e = Element::U8(androidrs::mRS);
     }
     size_t e_bytes = e->getSizeBytes();
 
     // alloc filter
-    sp<const Type> all_filters_t = Type::create(rs, e, filter_stride_e*filter_sz,
+    sp<const Type> all_filters_t = Type::create(androidrs::mRS, e, filter_stride_e*filter_sz,
                                                        0,
                                                        0);
-    sp<Allocation > allFilters_alloc = Allocation::createTyped(rs, all_filters_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+    sp<Allocation > allFilters_alloc = Allocation::createTyped(androidrs::mRS, all_filters_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
     allFilters_alloc->copy1DFrom(filter);
 
     // alloc input
-    sp<const Type> all_inputs_t = Type::create(rs, e, convInfo.in_depth*convInfo.input_rows*convInfo.input_cols,
+    sp<const Type> all_inputs_t = Type::create(androidrs::mRS, e, convInfo.in_depth*convInfo.input_rows*convInfo.input_cols,
                                                        0,
                                                        0);
-    sp<Allocation > allInputs_alloc = Allocation::createTyped(rs, all_inputs_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+    sp<Allocation > allInputs_alloc = Allocation::createTyped(androidrs::mRS, all_inputs_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
     allInputs_alloc->copy1DFrom(input);
 
     //alloc output
-    sp<const Type> all_outputs_t = Type::create(rs, e, convInfo.out_depth*convInfo.out_rows*convInfo.out_cols,
+    sp<const Type> all_outputs_t = Type::create(androidrs::mRS, e, convInfo.out_depth*convInfo.out_rows*convInfo.out_cols,
                                                        0,
                                                        0);
-    sp<Allocation > allOutputs_alloc = Allocation::createTyped(rs, all_outputs_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
+    sp<Allocation > allOutputs_alloc = Allocation::createTyped(androidrs::mRS, all_outputs_t, RS_ALLOCATION_USAGE_SHARED | RS_ALLOCATION_USAGE_SCRIPT);
 
     //kernel
-    sp<ScriptC_mScriptConv> sc = new ScriptC_mScriptConv(rs);
+    sp<ScriptC_mScriptConv> sc = new ScriptC_mScriptConv(androidrs::mRS);
     sc->set_in_depth(convInfo.in_depth);
     sc->set_input_rows(convInfo.input_rows);
     sc->set_input_cols(convInfo.input_cols);

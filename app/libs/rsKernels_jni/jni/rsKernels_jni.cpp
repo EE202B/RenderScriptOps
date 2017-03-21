@@ -43,13 +43,14 @@ Java_com_yingnanwang_rskernelstest_RSJniInterface_androidrsTest(JNIEnv * env,
     androidrs::matmul::smallTest<uint8_t>(path);
     androidrs::matmul::mediumTest<uint8_t>(path);
     androidrs::matmul::largeTest<uint8_t>(path);
-    LOGI("uint8_t test fail due to wrong ref computation, no need to worry");
+    LOGI("Matmul uint8_t test fail due to wrong ref computation, no need to worry");
 
     LOGD("+-+-+-+-Conv Float test-+-+-+-+");
     androidrs::conv::smallTest<float>(path);
     androidrs::conv::tfTest_F32<float>(path);
 
     LOGD("+-+-+-+-Conv uint8_t test-+-+-+-+");
+    LOGI("TODO in the future");
     // androidrs::conv::tfTest_U8<uint8_t, int32_t>(path);
 
     t.print();
