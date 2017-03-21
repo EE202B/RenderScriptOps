@@ -112,7 +112,7 @@ void smallTest(const char * path)
 }
 
 template <typename T>
-void largeTest_F32(const char * path)
+void tfTest_F32(const char * path)
 {
 
     ///////////////////////////////////////////////
@@ -127,9 +127,9 @@ void largeTest_F32(const char * path)
         void* output = new T[outputSz];
         rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
         if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
-            LOGE("rsConv_script 1x1 float large test failed!");
+            LOGE("rsConv_script 1x1 float TF test failed!");
         }else{
-            LOGI("rsConv_script 1x1 float large test passed!");
+            LOGI("rsConv_script 1x1 float TF test passed!");
         }
         delete[] static_cast<T*>(output);
     }
@@ -147,9 +147,9 @@ void largeTest_F32(const char * path)
         void* output = new T[outputSz];
         rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
         if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
-            LOGE("rsConv_script 3x3 float large test failed!");
+            LOGE("rsConv_script 3x3 float TF test failed!");
         }else{
-            LOGI("rsConv_script 3x3 float large test passed!");
+            LOGI("rsConv_script 3x3 float TF test passed!");
         }
         delete[] static_cast<T*>(output);
     }
@@ -167,9 +167,9 @@ void largeTest_F32(const char * path)
         void* output = new T[outputSz];
         rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
         if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
-            LOGE("rsConv_script 5x5 float large test failed!");
+            LOGE("rsConv_script 5x5 float TF test failed!");
         }else{
-            LOGI("rsConv_script 5x5 float large test passed!");
+            LOGI("rsConv_script 5x5 float TF test passed!");
         }
         delete[] static_cast<T*>(output);
     }
@@ -188,10 +188,10 @@ void largeTest_F32(const char * path)
         void* output = new T[outputSz];
         rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
         if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
-            LOGE("rsConv_script 7x7 float large test failed!");
+            LOGE("rsConv_script 7x7 TF large test failed!");
             LOGE("Issue: Filter size 7 but padding 2!");
         }else{
-            LOGI("rsConv_script 7x7 float large test passed!");
+            LOGI("rsConv_script 7x7 TF large test passed!");
         }
         delete[] static_cast<T*>(output);
     }

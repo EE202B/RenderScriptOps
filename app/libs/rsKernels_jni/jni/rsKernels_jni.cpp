@@ -37,6 +37,7 @@ Java_com_yingnanwang_rskernelstest_RSJniInterface_sgemmTest(JNIEnv * env,
     androidrs::matmul::smallTest<float>(path);
     androidrs::matmul::mediumTest<float>(path);
     androidrs::matmul::largeTest<float>(path);
+    androidrs::matmul::tfTest_F32<float>(path);
 
     LOGD("+-+-+-+-Matmul uint8_t test-+-+-+-+");
     androidrs::matmul::smallTest<uint8_t>(path);
@@ -45,7 +46,7 @@ Java_com_yingnanwang_rskernelstest_RSJniInterface_sgemmTest(JNIEnv * env,
     
     LOGD("+-+-+-+-Conv Float test-+-+-+-+");
     androidrs::conv::smallTest<float>(path);
-    androidrs::conv::largeTest_F32<float>(path);
+    androidrs::conv::tfTest_F32<float>(path);
 
     LOGD("+-+-+-+-Conv uint8_t test-+-+-+-+");
     // androidrs::conv::largeTest_U8<uint8_t>(path);

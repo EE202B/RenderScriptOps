@@ -237,6 +237,33 @@ void largeTest(const char * path)
     delete[] static_cast<T*>(c_ref);
 }
 
+template <typename T>
+void tfTest_F32(const char * path)
+{
+    {
+        auto A = getTFA();
+        auto B = getTFB();
+        auto c_ref = getTFC();
+        const int m = 1;
+        const int n = 1008;
+        const int k = 1024;
+        const int outsz = m*n;
+
+        void* c_out = new T[outsz];
+        if(sizeof(T)==4){
+            rsMatmul_sgemm(path, static_cast<void*>(A), false, static_cast<void*>(B), false, c_out, m, n, k, 1, 0);
+        }
+
+        if(!testWithTolerance<T>(c_out, c_ref, m, n)){
+            LOGE("rsMatmul float TF test failed!");
+        }else{
+            LOGI("rsMatmul float TF test passed!");
+        }
+
+        delete[] static_cast<T*>(c_out);
+    }
+}
+
 
 }
 }
