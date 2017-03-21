@@ -23,7 +23,7 @@
 #include "rsConv_test.h"
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_yingnanwang_rskernelstest_RSJniInterface_sgemmTest(JNIEnv * env,
+Java_com_yingnanwang_rskernelstest_RSJniInterface_androidrsTest(JNIEnv * env,
                                                        jclass,
                                                        jstring pathObj
                                                        )
@@ -49,7 +49,7 @@ Java_com_yingnanwang_rskernelstest_RSJniInterface_sgemmTest(JNIEnv * env,
     androidrs::conv::tfTest_F32<float>(path);
 
     LOGD("+-+-+-+-Conv uint8_t test-+-+-+-+");
-    // androidrs::conv::largeTest_U8<uint8_t>(path);
+    // androidrs::conv::tfTest_U8<uint8_t, int32_t>(path);
 
     t.print();
 

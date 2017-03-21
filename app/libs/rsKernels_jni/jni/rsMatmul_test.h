@@ -7,6 +7,7 @@
 
 #include "rsMatmul.h"
 #include "rsMatmul_test_data.h"
+#include "rsQuan_test_data.h"
 
 #define ALLOWED_ERROR 0.000001f
 
@@ -264,6 +265,34 @@ void tfTest_F32(const char * path)
     }
 }
 
+// not implemented due to type mismatch
+// gemmlowp::QuantizedGemm is int32_t while RS::BNNM output type is uint8_t
+template <typename Tin, typename Tout>
+void tfTest_U8(const char * path)
+{
+    {
+        auto A = getTFQuanA();
+        auto B = getTFQuanB();
+        auto c_ref = getTFQuanC();
+        const int m = 1;
+        const int n = 1008;
+        const int k = 1024;
+        const int outsz = m*n;
+
+        void* c_out = new Tin[outsz];
+        if(sizeof(Tin)==1){
+            rsMatmul_bnnm(path, static_cast<void*>(A), 173, static_cast<void*>(B), 139, c_out, 0, m, n, k, 1);
+        }
+
+        if(!testWithTolerance<Tin>(c_out, c_ref, m, n)){
+            LOGE("rsMatmul uint8_t TF test failed!");
+        }else{
+            LOGI("rsMatmul uint8_t TF test passed!");
+        }
+
+        delete[] static_cast<Tout*>(c_out);
+    }
+}
 
 }
 }
