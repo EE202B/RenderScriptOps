@@ -10,6 +10,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        RSJniInterface.sgemmTest(this.getCacheDir().toString());
+        RSJniInterface.androidrsTest(this.getCacheDir().toString());
     }
 }

@@ -15,5 +15,5 @@ public class RSJniInterface {
         }
     }
 
-    public static native void sgemmTest(String cacheDir);
+    public static native void androidrsTest(String cacheDir);
 }
