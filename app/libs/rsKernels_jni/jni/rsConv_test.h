@@ -188,10 +188,9 @@ void tfTest_F32(const char * path)
         void* output = new T[outputSz];
         rsConv_script<T>(path, static_cast<void*>(filter), static_cast<void*>(input), output, convInfo);
         if(!testWithTolerance<T>(output, static_cast<void*>(output_ref), outputSz)){
-            LOGE("rsConv_script 7x7 TF large test failed!");
-            LOGE("Issue: Filter size 7 but padding 2!");
+            LOGE("rsConv_script 7x7 float TF large test failed!");
         }else{
-            LOGI("rsConv_script 7x7 TF large test passed!");
+            LOGI("rsConv_script 7x7 float TF large test passed!");
         }
         delete[] static_cast<T*>(output);
     }
